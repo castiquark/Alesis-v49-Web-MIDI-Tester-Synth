@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alesis V49 - Hardware Tester &amp; Sound Workstation</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2306b6d4'/><path d='M8 24 L16 8 L24 24 Z' fill='%23020617'/></svg>">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* Base Typography & Selection */
+    body {
+      font-family: 'Inter', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #111827;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #374151;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4b5563;
+    }
+
+    /* Custom Wheels Styling (Pitch Bend & Modulation) */
+    .wheel-track {
+      background: linear-gradient(180deg, #090d16 0%, #171f2f 50%, #090d16 100%);
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+    }
+
+    .wheel-handle {
+      background: repeating-linear-gradient(
+        0deg,
+        #475569,
+        #475569 2px,
+        #1e293b 2px,
+        #1e293b 6px
+      );
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    /* White Key and Black Key Styling */
+    .key-white {
+      background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 85%, #cbd5e1 100%);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 #ffffff;
+    }
+
+    .key-white.active {
+      background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 16px rgba(14, 165, 233, 0.7), inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+      transform: translateY(2px);
+    }
+
+    .key-black {
+      background: linear-gradient(180deg, #334155 0%, #0f172a 75%, #020617 100%);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6);
+    }
+
+    .key-black.active {
+      background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%) !important;
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.8), inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+      transform: translateY(2px);
+    }
+
+    /* Tested Key Status Indicator Badge */
+    .key-tested::after {
+      content: '';
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5px;
+      height: 5px;
+      border-radius: 9999px;
+      background-color: #10b981;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.9);
+      pointer-events: none;
+    }
+
+    .key-black.key-tested::after {
+      bottom: 14px;
+      background-color: #34d399;
+    }
+
+    /* Highlight Missing Keys When Toggled */
+    .show-pending-keys .key-white:not(.key-tested) {
+      background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 85%, #fde68a 100%);
+      border-bottom: 3px solid #f59e0b;
+    }
+
+    .show-pending-keys .key-black:not(.key-tested) {
+      border: 1px solid #f59e0b;
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fadeIn {
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
+
+  <!-- TOP BAR / HEADER -->
+  <header class="border-b border-slate-800/80 bg-slate-900/70 backdrop-blur-md sticky top-0 z-50 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Device Label -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 font-black text-black text-lg">
+          V
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold tracking-tight text-white">Alesis V49 Hardware &amp; Sound Tester</h1>
+            <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/50">Pro Diagnostic</span>
+          </div>
+          <p class="text-xs text-slate-400">Verificador de teclas, pads, pitch bend, modulación y perillas con audio Web MIDI</p>
+        </div>
+      </div>
+
+      <!-- MIDI Connection & Engine Status -->
+      <div class="flex items-center gap-3 flex-wrap">
+        <div id="midiStatusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs">
+          <span id="statusLed" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+          <span id="statusText" class="text-slate-300 font-medium">Desconectado (Haz clic en Conectar)</span>
+        </div>
+
+        <!-- Master Preset Select -->
+        <div class="flex items-center gap-1.5 bg-slate-800/80 border border-slate-700 rounded-lg px-2.5 py-1">
+          <span class="text-xs text-slate-400">Sonido:</span>
+          <select id="presetSelect" class="bg-transparent text-xs text-cyan-300 font-semibold focus:outline-none cursor-pointer">
+            <option value="sawLead" class="bg-slate-900 text-slate-200">Analog Saw Lead</option>
+            <option value="electricPiano" class="bg-slate-900 text-slate-200">Electric Piano (Rhodes)</option>
+            <option value="warmPad" class="bg-slate-900 text-slate-200">Warm Synth Pad</option>
+            <option value="organ" class="bg-slate-900 text-slate-200">Vintage Organ</option>
+          </select>
+        </div>
+
+        <!-- Volume Master -->
+        <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1">
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+          </svg>
+          <input id="masterVol" type="range" min="0" max="1" step="0.01" value="0.75" class="w-16 accent-cyan-400 cursor-pointer">
+        </div>
+
+        <!-- Panic / Cut Audio Button -->
+        <button id="panicBtn" title="Cortar inmediatamente todas las notas sonando" class="flex items-center gap-1.5 bg-red-950/80 hover:bg-red-900 border border-red-600/60 text-red-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 shadow-md shadow-red-950/50">
+          <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+          <span>SILENCIAR (PANIC)</span>
+        </button>
+
+        <!-- Main Connect Button -->
+        <button id="connectMidiBtn" class="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs uppercase tracking-wider px-4 py-2 rounded-lg transition-all shadow-lg shadow-cyan-500/25 active:scale-95">
+          <svg class="w-4 h-4 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+          <span id="connectBtnText">Conectar Alesis V49</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="max-w-7xl mx-auto w-full px-4 py-4 space-y-4 flex-1">
+
+    <!-- IFRAME RESTRICTION BANNER -->
+    <div id="sandboxWarningBanner" class="bg-amber-950/80 border border-amber-600/60 rounded-xl p-3.5 text-amber-200 text-xs shadow-lg animate-fadeIn hidden">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-start gap-2.5">
+          <svg class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+          <div>
+            <strong class="font-bold text-amber-300">Aviso sobre visor integrado:</strong> El navegador puede bloquear los puertos USB/MIDI dentro de ventanas embebidas o iframes por políticas de seguridad.
+            <p class="text-slate-300 text-[11px] mt-1">Para conectar físicamente el Alesis V49, abre este archivo directamente en tu navegador (Chrome, Edge u Opera).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HARDWARE HEALTH CHECKLIST BAR -->
+    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 shadow-xl">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-2.5">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full bg-cyan-400"></div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-200">Verificación de Componentes Físicos (Hardware Checklist)</span>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <span id="checklistPercentage" class="mono text-cyan-400 font-bold text-sm">0% verificado</span>
+          <button id="resetChecklistBtn" class="text-slate-400 hover:text-white transition-colors underline">Reiniciar prueba</button>
+        </div>
+      </div>
+
+      <!-- Checklist Badges Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+        
+        <!-- Keys -->
+        <div id="checkCardKeys" class="bg-slate-950/80 border border-slate-800 rounded-lg p-2 flex items-center justify-between transition-colors">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Teclas (49)</div>
+            <div class="mono text-xs font-bold text-slate-200"><span id="testedKeysCount">0</span>/49</div>
+          </div>
+          <div id="iconCheckKeys" class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+        </div>
+
+        <!-- Pads -->
+        <div id="checkCardPads" class="bg-slate-950/80 border border-slate-800 rounded-lg p-2 flex items-center justify-between transition-colors">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Pads (8)</div>
+            <div class="mono text-xs font-bold text-slate-200"><span id="testedPadsCount">0</span>/8</div>
+          </div>
+          <div id="iconCheckPads" class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+        </div>
+
+        <!-- Pitch Bend -->
+        <div id="checkCardPitch" class="bg-slate-950/80 border border-slate-800 rounded-lg p-2 flex items-center justify-between transition-colors">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Pitch Bend</div>
+            <div id="testedPitchLabel" class="text-xs font-bold text-slate-400">Sin mover</div>
+          </div>
+          <div id="iconCheckPitch" class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+        </div>
+
+        <!-- Mod Wheel -->
+        <div id="checkCardMod" class="bg-slate-950/80 border border-slate-800 rounded-lg p-2 flex items-center justify-between transition-colors">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Modulación</div>
+            <div id="testedModLabel" class="text-xs font-bold text-slate-400">Sin mover</div>
+          </div>
+          <div id="iconCheckMod" class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+        </div>
+
+        <!-- Knobs -->
+        <div id="checkCardKnobs" class="bg-slate-950/80 border border-slate-800 rounded-lg p-2 flex items-center justify-between transition-colors">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Perillas (4)</div>
+            <div class="mono text-xs font-bold text-slate-200"><span id="testedKnobsCount">0</span>/4</div>
+          </div>
+          <div id="iconCheckKnobs" class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+        </div>
+
+        <!-- Sustain Pedal -->
+        <div id="checkCardSustain" class="bg-slate-950/80 border border-slate-800 rounded-lg p-2 flex items-center justify-between transition-colors">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Pedal Sustain</div>
+            <div id="testedSustainLabel" class="text-xs font-bold text-slate-400">Opcional</div>
+          </div>
+          <div id="iconCheckSustain" class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DYNAMIC PENDING STATUS PANEL -->
+      <div id="pendingContainer" class="mt-3 pt-3 border-t border-slate-800/80">
+        <div id="pendingHeader" class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-black">!</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-300">¿Qué falta probar todavía?</span>
+            <span id="pendingItemsCountBadge" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-950/80 text-amber-300 border border-amber-800/60 font-bold">Iniciando verificación...</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="toggleHighlightMissingBtn" class="text-[11px] font-medium text-cyan-400 hover:text-cyan-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded transition-colors flex items-center gap-1.5">
+              <span id="highlightToggleDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span>Resaltar teclas pendientes en pantalla</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Badges list of pending components -->
+        <div id="pendingBadgesList" class="flex flex-wrap gap-2 text-xs"></div>
+
+        <!-- All components tested success card (hidden by default) -->
+        <div id="allCompleteBanner" class="bg-emerald-950/60 border border-emerald-500/60 rounded-lg p-3 text-emerald-200 text-xs flex items-center justify-between shadow-lg shadow-emerald-950/40 hidden">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-base font-black">
+              ✓
+            </div>
+            <div>
+              <strong class="font-bold text-sm text-emerald-300">¡Verificación Completa de Hardware (100%)!</strong>
+              <p class="text-emerald-400/90 text-[11px]">Todas las 49 teclas, los 8 pads, el pitch bend, la modulación y las 4 perillas responden sin fallas ni puntos muertos.</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wider">Hardware 100% Funcional</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN HARDWARE REPLICA CHASSIS (ALESIS V49 DASHBOARD) -->
+    <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-4 shadow-2xl relative overflow-hidden">
+      
+      <!-- Subtle chassis accents -->
+      <div class="flex items-center justify-between text-xs text-slate-500 pb-3 border-b border-slate-800/80 mb-4 font-mono">
+        <span class="tracking-widest font-bold text-slate-400 uppercase flex items-center gap-2">
+          <span class="w-2 h-2 rounded-sm bg-blue-500 inline-block"></span> ALESIS V49 CONTROLLER DASHBOARD
+        </span>
+        <div class="flex items-center gap-3">
+          <span id="octaveIndicator" class="text-[10px] text-slate-400 font-mono hidden md:inline-block">Rango Teclado: <strong class="text-cyan-400">C2 (36) - C6 (84)</strong></span>
+          <div class="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5">
+            <span class="text-[10px] text-slate-400 mr-1">Octava Base:</span>
+            <button id="octaveDownBtn" class="px-1.5 py-0.2 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold rounded text-xs">-</button>
+            <span id="currentOctaveShiftLabel" class="text-cyan-400 font-bold px-1 text-xs">C2</span>
+            <button id="octaveUpBtn" class="px-1.5 py-0.2 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold rounded text-xs">+</button>
+            <button id="autoOctaveBtn" class="ml-1 text-[9px] bg-cyan-950 text-cyan-300 border border-cyan-800/60 px-1.5 py-0.5 rounded hover:bg-cyan-900" title="Auto-detecta la octava al tocar cualquier tecla">Auto</button>
+          </div>
+          <span id="sustainStatusBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700 cursor-pointer">SUSTAIN: OFF</span>
+        </div>
+      </div>
+
+      <!-- TOP CONTROLS SECTION: Wheels, Knobs, and 8 Pads -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4">
+        
+        <!-- LEFT: Pitch & Mod Wheels -->
+        <div class="lg:col-span-3 bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex gap-4 justify-around items-center">
+          
+          <!-- Pitch Bend Wheel -->
+          <div class="flex flex-col items-center gap-1.5 w-1/2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pitch Bend</span>
+            <div class="relative w-14 h-36 rounded-md wheel-track border border-slate-700/60 p-1 flex justify-center items-center overflow-hidden">
+              <div class="absolute w-full h-[1px] bg-cyan-500/50 left-0 top-1/2 -translate-y-1/2 z-0"></div>
+              <div id="pitchWheelHandle" class="absolute w-12 h-14 rounded-sm wheel-handle border border-slate-500/40 cursor-ns-resize transition-all duration-75 flex items-center justify-center shadow-lg" style="top: 44px;">
+                <div class="w-6 h-1 rounded-full bg-cyan-400/80"></div>
+              </div>
+            </div>
+            <div class="mono text-[11px] text-cyan-400 font-semibold mt-1">
+              <span id="pitchBendValDisplay">+0</span>
+            </div>
+            <span class="text-[9px] text-slate-500 font-mono">(-8192 a +8191)</span>
+          </div>
+
+          <!-- Modulation Wheel -->
+          <div class="flex flex-col items-center gap-1.5 w-1/2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Mod (CC 1)</span>
+            <div class="relative w-14 h-36 rounded-md wheel-track border border-slate-700/60 p-1 flex justify-center items-end overflow-hidden">
+              <div id="modWheelFill" class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-blue-600/40 via-cyan-500/50 to-cyan-400/80 transition-all duration-75" style="height: 0%;"></div>
+              <div id="modWheelHandle" class="absolute w-12 h-14 rounded-sm wheel-handle border border-slate-500/40 cursor-ns-resize transition-all duration-75 flex items-center justify-center shadow-lg" style="bottom: 0px;">
+                <div class="w-6 h-1 rounded-full bg-cyan-400/80"></div>
+              </div>
+            </div>
+            <div class="mono text-[11px] text-cyan-400 font-semibold mt-1">
+              <span id="modValDisplay">0</span> / 127
+            </div>
+            <span class="text-[9px] text-slate-500 font-mono">(Vibrato audible)</span>
+          </div>
+
+        </div>
+
+        <!-- CENTER: 4 Rotary Knobs with real audio mapping -->
+        <div class="lg:col-span-5 bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">4 Perillas Giratorias (Knobs Asignables)</span>
+            <span class="text-[10px] text-cyan-400 font-mono bg-cyan-950/50 px-2 py-0.5 rounded border border-cyan-800/40">Filtro &amp; Efectos en vivo</span>
+          </div>
+
+          <div class="grid grid-cols-4 gap-2 text-center">
+            
+            <!-- Knob 1: Cutoff -->
+            <div class="flex flex-col items-center group">
+              <span class="text-[10px] font-bold text-slate-300">KNOB 1</span>
+              <span class="text-[9px] text-slate-500 mb-1">Cutoff</span>
+              <div class="relative w-14 h-14 flex items-center justify-center">
+                <svg class="w-14 h-14 -rotate-90 transform" viewBox="0 0 36 36">
+                  <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                  <path id="knobArc1" class="text-cyan-400 transition-all duration-75" stroke-dasharray="100, 100" stroke-dashoffset="46.85" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                </svg>
+                <div id="knobCenter1" class="absolute w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-md">
+                  <div class="w-1 h-3 bg-cyan-400 rounded-full -translate-y-1.5 transition-transform duration-75" id="knobIndicator1" style="transform: translateY(-6px) rotate(56.3deg);"></div>
+                </div>
+              </div>
+              <div class="mono text-[11px] text-cyan-400 font-bold mt-1" id="knobVal1">90</div>
+              <span class="text-[8px] text-slate-400 font-mono text-cyan-400" id="knobCc1">CC 20</span>
+            </div>
+
+            <!-- Knob 2: Resonance -->
+            <div class="flex flex-col items-center group">
+              <span class="text-[10px] font-bold text-slate-300">KNOB 2</span>
+              <span class="text-[9px] text-slate-500 mb-1">Resonancia</span>
+              <div class="relative w-14 h-14 flex items-center justify-center">
+                <svg class="w-14 h-14 -rotate-90 transform" viewBox="0 0 36 36">
+                  <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                  <path id="knobArc2" class="text-cyan-400 transition-all duration-75" stroke-dasharray="100, 100" stroke-dashoffset="88.18" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                </svg>
+                <div class="absolute w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-md">
+                  <div class="w-1 h-3 bg-cyan-400 rounded-full -translate-y-1.5 transition-transform duration-75" id="knobIndicator2" style="transform: translateY(-6px) rotate(-92.5deg);"></div>
+                </div>
+              </div>
+              <div class="mono text-[11px] text-cyan-400 font-bold mt-1" id="knobVal2">20</div>
+              <span class="text-[8px] text-slate-400 font-mono text-cyan-400" id="knobCc2">CC 21</span>
+            </div>
+
+            <!-- Knob 3: Delay Mix -->
+            <div class="flex flex-col items-center group">
+              <span class="text-[10px] font-bold text-slate-300">KNOB 3</span>
+              <span class="text-[9px] text-slate-500 mb-1">Eco / Delay</span>
+              <div class="relative w-14 h-14 flex items-center justify-center">
+                <svg class="w-14 h-14 -rotate-90 transform" viewBox="0 0 36 36">
+                  <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                  <path id="knobArc3" class="text-cyan-400 transition-all duration-75" stroke-dasharray="100, 100" stroke-dashoffset="85.23" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                </svg>
+                <div class="absolute w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-md">
+                  <div class="w-1 h-3 bg-cyan-400 rounded-full -translate-y-1.5 transition-transform duration-75" id="knobIndicator3" style="transform: translateY(-6px) rotate(-81.9deg);"></div>
+                </div>
+              </div>
+              <div class="mono text-[11px] text-cyan-400 font-bold mt-1" id="knobVal3">25</div>
+              <span class="text-[8px] text-slate-400 font-mono text-cyan-400" id="knobCc3">CC 22</span>
+            </div>
+
+            <!-- Knob 4: Release Time -->
+            <div class="flex flex-col items-center group">
+              <span class="text-[10px] font-bold text-slate-300">KNOB 4</span>
+              <span class="text-[9px] text-slate-500 mb-1">Release</span>
+              <div class="relative w-14 h-14 flex items-center justify-center">
+                <svg class="w-14 h-14 -rotate-90 transform" viewBox="0 0 36 36">
+                  <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                  <path id="knobArc4" class="text-cyan-400 transition-all duration-75" stroke-dasharray="100, 100" stroke-dashoffset="76.37" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                </svg>
+                <div class="absolute w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-md">
+                  <div class="w-1 h-3 bg-cyan-400 rounded-full -translate-y-1.5 transition-transform duration-75" id="knobIndicator4" style="transform: translateY(-6px) rotate(-50deg);"></div>
+                </div>
+              </div>
+              <div class="mono text-[11px] text-cyan-400 font-bold mt-1" id="knobVal4">40</div>
+              <span class="text-[8px] text-slate-400 font-mono text-cyan-400" id="knobCc4">CC 23</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- RIGHT: 8 Backlit Drum Pads (2x4 Grid) -->
+        <div class="lg:col-span-4 bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">8 Pads de Percusión</span>
+            <div class="flex items-center gap-1.5 flex-wrap justify-end">
+              <select id="padMapPreset" class="bg-slate-900 border border-slate-700 text-cyan-300 text-[10px] rounded px-1.5 py-0.5 font-mono focus:outline-none cursor-pointer">
+                <option value="gm">Canal 10 / GM Drums (36, 38, 42...)</option>
+                <option value="factory48">Alesis Fábrica (Notas 48 a 55)</option>
+                <option value="chromatic36">Cromático C1 (36 a 43)</option>
+              </select>
+              <button id="learnPadsWizardBtn" title="Aprender los 8 pads en orden tocándolos uno a uno" class="text-[10px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-2 py-0.5 rounded transition-all flex items-center gap-1 shadow-sm shadow-amber-500/20 active:scale-95">🎯 <span>Asignar 1 a 8</span></button>
+              <button id="resetPadsBtn" title="Limpiar mapeo de pads" class="text-[9px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700">
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <!-- Wizard Guide Prompt -->
+          <div id="padWizardPrompt" class="bg-amber-950/90 border border-amber-500/70 rounded-lg p-1.5 text-center text-xs text-amber-200 font-bold mb-2 shadow-inner hidden">
+            <span id="padWizardPromptText">👉 Golpea el <strong class="text-amber-300 uppercase">PAD 1</strong> físico en tu Alesis...</span>
+            <button id="cancelPadWizardBtn" class="ml-2 text-[10px] underline text-slate-400 hover:text-white">Cancelar</button>
+          </div>
+
+          <!-- Pads Grid -->
+          <div class="grid grid-cols-4 gap-2 h-full">
+            <!-- Pad 1 -->
+            <button data-pad="0" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 1</span>
+              <span id="padNoteLabel0" class="text-[8px] text-cyan-400 font-mono">#36</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 2 -->
+            <button data-pad="1" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 2</span>
+              <span id="padNoteLabel1" class="text-[8px] text-cyan-400 font-mono">#38</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 3 -->
+            <button data-pad="2" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 3</span>
+              <span id="padNoteLabel2" class="text-[8px] text-cyan-400 font-mono">#42</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 4 -->
+            <button data-pad="3" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 4</span>
+              <span id="padNoteLabel3" class="text-[8px] text-cyan-400 font-mono">#46</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 5 -->
+            <button data-pad="4" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 5</span>
+              <span id="padNoteLabel4" class="text-[8px] text-cyan-400 font-mono">#41</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 6 -->
+            <button data-pad="5" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 6</span>
+              <span id="padNoteLabel5" class="text-[8px] text-cyan-400 font-mono">#45</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 7 -->
+            <button data-pad="6" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 7</span>
+              <span id="padNoteLabel6" class="text-[8px] text-cyan-400 font-mono">#49</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 8 -->
+            <button data-pad="7" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 8</span>
+              <span id="padNoteLabel7" class="text-[8px] text-cyan-400 font-mono">#51</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 49-KEY VIRTUAL HARDWARE KEYBOARD (C2 to C6) -->
+      <div class="relative bg-slate-950 p-3 rounded-xl border border-slate-800 overflow-x-auto">
+        <div class="flex items-center justify-between mb-2 px-1 text-xs">
+          <div class="flex items-center gap-3">
+            <span class="font-bold text-slate-300">Teclado de 49 Teclas (Sensible a la Velocidad)</span>
+            <span id="activeNoteDisplay" class="text-cyan-400 font-mono font-bold">Nota: -- | Tecla Física: -- | Velocity: --</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="missingKeysHelp" class="text-amber-400/90 text-[11px] font-mono hidden">Faltan teclas por tocar</span>
+            <button id="completeChecklistBtn" title="Completa el 100% de la prueba de forma rápida" class="text-[10px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-2 py-0.5 rounded transition-colors">
+              Validar 100%
+            </button>
+          </div>
+        </div>
+
+        <!-- Keys Container -->
+        <div id="keyboardContainer" class="relative flex h-44 min-w-[760px] w-full rounded-md overflow-hidden bg-slate-900 border border-slate-800"></div>
+      </div>
+
+    </div>
+
+    <!-- REAL-TIME MIDI EVENT MONITOR & LOG CONSOLE -->
+    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 shadow-xl">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-200">Monitor Técnico MIDI en Tiempo Real</span>
+          <span class="text-[10px] text-slate-400 font-mono">(Monitoreo en tiempo real de notas, CC, velocidad y latencia)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="clearLogBtn" class="text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800 border border-slate-700 transition-colors">
+            Limpiar Registro
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto max-h-40 overflow-y-auto rounded-lg border border-slate-800 bg-slate-950/90 font-mono text-xs">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-slate-900/90 text-slate-400 text-[10px] uppercase sticky top-0 border-b border-slate-800">
+            <tr>
+              <th class="py-1.5 px-3">Hora</th>
+              <th class="py-1.5 px-3">Mensaje</th>
+              <th class="py-1.5 px-3">Canal</th>
+              <th class="py-1.5 px-3">Dato 1 (Nota / CC)</th>
+              <th class="py-1.5 px-3">Dato 2 (Velocidad / Valor)</th>
+              <th class="py-1.5 px-3">Detalle &amp; Comportamiento</th>
+            </tr>
+          </thead>
+          <tbody id="midiLogTableBody" class="divide-y divide-slate-800/50 text-[11px]">
+            <tr class="text-slate-500">
+              <td colspan="6" class="py-4 text-center">Esperando eventos MIDI... Conecta tu Alesis V49 o presiona las teclas en pantalla.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800/80 bg-slate-950/80 px-4 py-2.5 text-center text-xs text-slate-500">
+    Alesis V49 Web MIDI Verification Workstation • Compatible con Chrome, Edge, Brave y Opera en Windows, macOS y Linux.
+  </footer>
+
+  <!-- EMBEDDED APPLICATION JAVASCRIPT LOGIC -->
+  <script>
+    /* ==========================================================================
+       AUDIO SYNTHESIZER ENGINE (Web Audio API)
+       ========================================================================== */
+    class AudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.masterGain = null;
+        this.filterNode = null;
+        this.delayNode = null;
+        this.delayFeedback = null;
+        this.delayWet = null;
+        this.delayDry = null;
+        this.activeVoices = new Map();
+        this.sustainPedalDown = false;
+        this.heldNotes = new Set();
+        this.pitchBendNorm = 0;
+        this.pitchBendSemis = 2;
+        this.modDepth = 0;
+        this.filterCutoffHz = 2500;
+        this.filterResonanceQ = 2.0;
+        this.releaseTimeSec = 0.4;
+        this.preset = 'sawLead';
+      }
+
+      init() {
+        if (this.ctx) return;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContextClass();
+
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.75, this.ctx.currentTime);
+
+        this.filterNode = this.ctx.createBiquadFilter();
+        this.filterNode.type = 'lowpass';
+        this.filterNode.frequency.setValueAtTime(this.filterCutoffHz, this.ctx.currentTime);
+        this.filterNode.Q.setValueAtTime(this.filterResonanceQ, this.ctx.currentTime);
+
+        this.delayNode = this.ctx.createDelay();
+        this.delayNode.delayTime.setValueAtTime(0.32, this.ctx.currentTime);
+        this.delayFeedback = this.ctx.createGain();
+        this.delayFeedback.gain.setValueAtTime(0.38, this.ctx.currentTime);
+        this.delayWet = this.ctx.createGain();
+        this.delayWet.gain.setValueAtTime(0.25, this.ctx.currentTime);
+        this.delayDry = this.ctx.createGain();
+        this.delayDry.gain.setValueAtTime(0.75, this.ctx.currentTime);
+
+        this.delayNode.connect(this.delayFeedback);
+        this.delayFeedback.connect(this.delayNode);
+
+        this.filterNode.connect(this.delayDry);
+        this.filterNode.connect(this.delayNode);
+        this.delayNode.connect(this.delayWet);
+
+        this.delayDry.connect(this.masterGain);
+        this.delayWet.connect(this.masterGain);
+        this.masterGain.connect(this.ctx.destination);
+      }
+
+      resume() {
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      setMasterVolume(val) {
+        if (!this.ctx) return;
+        this.masterGain.gain.setTargetAtTime(parseFloat(val), this.ctx.currentTime, 0.02);
+      }
+
+      setFilterCutoff(normVal) {
+        if (!this.ctx) return;
+        const freq = 80 * Math.pow(16000 / 80, normVal);
+        this.filterCutoffHz = freq;
+        this.filterNode.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.02);
+      }
+
+      setFilterResonance(normVal) {
+        if (!this.ctx) return;
+        const q = 0.5 + normVal * 15;
+        this.filterResonanceQ = q;
+        this.filterNode.Q.setTargetAtTime(q, this.ctx.currentTime, 0.02);
+      }
+
+      setDelayMix(normVal) {
+        if (!this.ctx) return;
+        this.delayWet.gain.setTargetAtTime(normVal * 0.7, this.ctx.currentTime, 0.02);
+        this.delayDry.gain.setTargetAtTime(1 - normVal * 0.4, this.ctx.currentTime, 0.02);
+      }
+
+      setReleaseTime(normVal) {
+        this.releaseTimeSec = 0.03 + normVal * 0.72;
+      }
+
+      setPitchBend(normVal) {
+        this.pitchBendNorm = normVal;
+        const totalCents = normVal * (this.pitchBendSemis * 100);
+        this.activeVoices.forEach(voice => {
+          if (voice.oscs) {
+            voice.oscs.forEach(osc => {
+              osc.detune.setTargetAtTime(voice.baseDetune + totalCents, this.ctx.currentTime, 0.015);
+            });
+          }
+        });
+      }
+
+      setModulation(normVal) {
+        this.modDepth = normVal;
+        this.activeVoices.forEach(voice => {
+          if (voice.vibratoGain) {
+            voice.vibratoGain.gain.setTargetAtTime(normVal * 70, this.ctx.currentTime, 0.02);
+          }
+        });
+      }
+
+      midiNoteToFreq(midiNote) {
+        return 440 * Math.pow(2, (midiNote - 69) / 12);
+      }
+
+      noteOn(note, velocity = 100) {
+        if (!this.ctx) this.init();
+        this.resume();
+
+        if (this.activeVoices.has(note)) {
+          this.stopVoice(this.activeVoices.get(note));
+        }
+
+        const now = this.ctx.currentTime;
+        const freq = this.midiNoteToFreq(note);
+        const normVel = Math.max(0.1, velocity / 127);
+
+        const voiceGain = this.ctx.createGain();
+        voiceGain.gain.setValueAtTime(0, now);
+
+        const vibratoLfo = this.ctx.createOscillator();
+        vibratoLfo.frequency.setValueAtTime(5.8, now);
+        const vibratoGain = this.ctx.createGain();
+        vibratoGain.gain.setValueAtTime(this.modDepth * 70, now);
+        vibratoLfo.connect(vibratoGain);
+        vibratoLfo.start(now);
+
+        const oscs = [];
+        const baseDetune = 0;
+        const currentBendCents = this.pitchBendNorm * (this.pitchBendSemis * 100);
+
+        if (this.preset === 'sawLead') {
+          const osc1 = this.ctx.createOscillator();
+          osc1.type = 'sawtooth';
+          osc1.frequency.setValueAtTime(freq, now);
+          osc1.detune.setValueAtTime(-5 + currentBendCents, now);
+          vibratoGain.connect(osc1.detune);
+
+          const osc2 = this.ctx.createOscillator();
+          osc2.type = 'sawtooth';
+          osc2.frequency.setValueAtTime(freq, now);
+          osc2.detune.setValueAtTime(5 + currentBendCents, now);
+          vibratoGain.connect(osc2.detune);
+
+          osc1.connect(voiceGain);
+          osc2.connect(voiceGain);
+          osc1.start(now);
+          osc2.start(now);
+          oscs.push(osc1, osc2);
+
+          voiceGain.gain.linearRampToValueAtTime(normVel * 0.45, now + 0.015);
+          voiceGain.gain.setTargetAtTime(normVel * 0.35, now + 0.03, 0.15);
+
+        } else if (this.preset === 'electricPiano') {
+          const osc1 = this.ctx.createOscillator();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(freq, now);
+          osc1.detune.setValueAtTime(currentBendCents, now);
+          vibratoGain.connect(osc1.detune);
+
+          const osc2 = this.ctx.createOscillator();
+          osc2.type = 'triangle';
+          osc2.frequency.setValueAtTime(freq * 2, now);
+          osc2.detune.setValueAtTime(currentBendCents, now);
+
+          const osc2Gain = this.ctx.createGain();
+          osc2Gain.gain.setValueAtTime(0.25, now);
+          osc2Gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+
+          osc1.connect(voiceGain);
+          osc2.connect(osc2Gain);
+          osc2Gain.connect(voiceGain);
+
+          osc1.start(now);
+          osc2.start(now);
+          oscs.push(osc1, osc2);
+
+          voiceGain.gain.linearRampToValueAtTime(normVel * 0.5, now + 0.01);
+          voiceGain.gain.exponentialRampToValueAtTime(normVel * 0.2, now + 0.8);
+
+        } else if (this.preset === 'warmPad') {
+          const osc1 = this.ctx.createOscillator();
+          osc1.type = 'sawtooth';
+          osc1.frequency.setValueAtTime(freq, now);
+          osc1.detune.setValueAtTime(-8 + currentBendCents, now);
+          vibratoGain.connect(osc1.detune);
+
+          const osc2 = this.ctx.createOscillator();
+          osc2.type = 'triangle';
+          osc2.frequency.setValueAtTime(freq, now);
+          osc2.detune.setValueAtTime(8 + currentBendCents, now);
+          vibratoGain.connect(osc2.detune);
+
+          osc1.connect(voiceGain);
+          osc2.connect(voiceGain);
+          osc1.start(now);
+          osc2.start(now);
+          oscs.push(osc1, osc2);
+
+          voiceGain.gain.linearRampToValueAtTime(normVel * 0.38, now + 0.18);
+
+        } else if (this.preset === 'organ') {
+          const harmonics = [1, 2, 3];
+          harmonics.forEach((h, idx) => {
+            const osc = this.ctx.createOscillator();
+            osc.type = idx === 0 ? 'sine' : 'square';
+            osc.frequency.setValueAtTime(freq * h, now);
+            osc.detune.setValueAtTime(currentBendCents, now);
+            vibratoGain.connect(osc.detune);
+
+            const hGain = this.ctx.createGain();
+            hGain.gain.setValueAtTime(0.25 / (idx + 1), now);
+            osc.connect(hGain);
+            hGain.connect(voiceGain);
+            osc.start(now);
+            oscs.push(osc);
+          });
+
+          voiceGain.gain.linearRampToValueAtTime(normVel * 0.4, now + 0.01);
+        }
+
+        voiceGain.connect(this.filterNode);
+
+        const voice = {
+          note,
+          oscs,
+          voiceGain,
+          vibratoLfo,
+          vibratoGain,
+          baseDetune,
+          heldBySustain: false,
+          startTime: now
+        };
+
+        this.activeVoices.set(note, voice);
+
+        setTimeout(() => {
+          if (this.activeVoices.has(note) && this.activeVoices.get(note) === voice && !voice.heldBySustain) {
+            this.stopVoice(voice);
+            this.activeVoices.delete(note);
+          }
+        }, 8000);
+      }
+
+      noteOff(note) {
+        if (!this.activeVoices.has(note)) return;
+        const voice = this.activeVoices.get(note);
+
+        if (this.sustainPedalDown) {
+          voice.heldBySustain = true;
+          this.heldNotes.add(note);
+        } else {
+          this.stopVoice(voice);
+          this.activeVoices.delete(note);
+        }
+      }
+
+      stopVoice(voice) {
+        if (!this.ctx || !voice) return;
+        const now = this.ctx.currentTime;
+        const rel = Math.max(0.02, Math.min(this.releaseTimeSec, 0.4));
+
+        try {
+          voice.voiceGain.gain.cancelScheduledValues(now);
+          const currentGain = Math.max(0.0001, voice.voiceGain.gain.value);
+          voice.voiceGain.gain.setValueAtTime(currentGain, now);
+          voice.voiceGain.gain.linearRampToValueAtTime(0, now + rel);
+        } catch (e) {
+          try { voice.voiceGain.gain.setValueAtTime(0, now); } catch (err) {}
+        }
+
+        setTimeout(() => {
+          try {
+            voice.oscs.forEach(osc => {
+              try { osc.stop(); osc.disconnect(); } catch (e) {}
+            });
+            if (voice.vibratoLfo) {
+              try { voice.vibratoLfo.stop(); voice.vibratoLfo.disconnect(); } catch (e) {}
+            }
+            voice.voiceGain.disconnect();
+          } catch (e) {}
+        }, (rel * 1000) + 60);
+      }
+
+      allNotesOff() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        this.activeVoices.forEach(voice => {
+          try {
+            voice.voiceGain.gain.cancelScheduledValues(now);
+            voice.voiceGain.gain.setValueAtTime(0, now);
+            voice.oscs.forEach(osc => {
+              try { osc.stop(); osc.disconnect(); } catch (e) {}
+            });
+            if (voice.vibratoLfo) {
+              try { voice.vibratoLfo.stop(); voice.vibratoLfo.disconnect(); } catch (e) {}
+            }
+            voice.voiceGain.disconnect();
+          } catch (e) {}
+        });
+        this.activeVoices.clear();
+        this.heldNotes.clear();
+        this.sustainPedalDown = false;
+      }
+
+      setSustain(isDown) {
+        this.sustainPedalDown = isDown;
+        if (!isDown) {
+          this.heldNotes.forEach(note => {
+            if (this.activeVoices.has(note)) {
+              this.stopVoice(this.activeVoices.get(note));
+              this.activeVoices.delete(note);
+            }
+          });
+          this.heldNotes.clear();
+        }
+      }
+
+      triggerDrum(padIndex, velocity = 100) {
+        if (!this.ctx) this.init();
+        this.resume();
+        const now = this.ctx.currentTime;
+        const normVel = Math.max(0.1, velocity / 127);
+
+        switch (padIndex) {
+          case 0: // 808 Kick
+            {
+              const osc = this.ctx.createOscillator();
+              const gain = this.ctx.createGain();
+              osc.frequency.setValueAtTime(140, now);
+              osc.frequency.exponentialRampToValueAtTime(38, now + 0.12);
+              gain.gain.setValueAtTime(normVel * 0.9, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+              osc.connect(gain);
+              gain.connect(this.masterGain);
+              osc.start(now);
+              osc.stop(now + 0.36);
+            }
+            break;
+          case 1: // Snare
+            {
+              const bufferSize = this.ctx.sampleRate * 0.2;
+              const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+              const data = buffer.getChannelData(0);
+              for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+              }
+              const noise = this.ctx.createBufferSource();
+              noise.buffer = buffer;
+              const filter = this.ctx.createBiquadFilter();
+              filter.type = 'highpass';
+              filter.frequency.setValueAtTime(800, now);
+              const gain = this.ctx.createGain();
+              gain.gain.setValueAtTime(normVel * 0.6, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+              noise.connect(filter);
+              filter.connect(gain);
+              gain.connect(this.masterGain);
+              noise.start(now);
+
+              const osc = this.ctx.createOscillator();
+              const oscGain = this.ctx.createGain();
+              osc.frequency.setValueAtTime(220, now);
+              osc.frequency.exponentialRampToValueAtTime(100, now + 0.08);
+              oscGain.gain.setValueAtTime(normVel * 0.4, now);
+              oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+              osc.connect(oscGain);
+              oscGain.connect(this.masterGain);
+              osc.start(now);
+              osc.stop(now + 0.1);
+            }
+            break;
+          case 2: // Closed Hi-Hat
+            {
+              const osc = this.ctx.createOscillator();
+              osc.type = 'square';
+              osc.frequency.setValueAtTime(8000, now);
+              const filter = this.ctx.createBiquadFilter();
+              filter.type = 'highpass';
+              filter.frequency.setValueAtTime(7000, now);
+              const gain = this.ctx.createGain();
+              gain.gain.setValueAtTime(normVel * 0.4, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+              osc.connect(filter);
+              filter.connect(gain);
+              gain.connect(this.masterGain);
+              osc.start(now);
+              osc.stop(now + 0.06);
+            }
+            break;
+          case 3: // Open Hi-Hat
+            {
+              const osc = this.ctx.createOscillator();
+              osc.type = 'square';
+              osc.frequency.setValueAtTime(6500, now);
+              const filter = this.ctx.createBiquadFilter();
+              filter.type = 'highpass';
+              filter.frequency.setValueAtTime(5000, now);
+              const gain = this.ctx.createGain();
+              gain.gain.setValueAtTime(normVel * 0.45, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+              osc.connect(filter);
+              filter.connect(gain);
+              gain.connect(this.masterGain);
+              osc.start(now);
+              osc.stop(now + 0.36);
+            }
+            break;
+          case 4: // Low Tom
+            {
+              const osc = this.ctx.createOscillator();
+              const gain = this.ctx.createGain();
+              osc.frequency.setValueAtTime(160, now);
+              osc.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+              gain.gain.setValueAtTime(normVel * 0.7, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+              osc.connect(gain);
+              gain.connect(this.masterGain);
+              osc.start(now);
+              osc.stop(now + 0.26);
+            }
+            break;
+          case 5: // High Tom
+            {
+              const osc = this.ctx.createOscillator();
+              const gain = this.ctx.createGain();
+              osc.frequency.setValueAtTime(240, now);
+              osc.frequency.exponentialRampToValueAtTime(140, now + 0.18);
+              gain.gain.setValueAtTime(normVel * 0.65, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+              osc.connect(gain);
+              gain.connect(this.masterGain);
+              osc.start(now);
+              osc.stop(now + 0.23);
+            }
+            break;
+          case 6: // Clap
+            {
+              for (let i = 0; i < 3; i++) {
+                const burstTime = now + i * 0.015;
+                const osc = this.ctx.createOscillator();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(1200, burstTime);
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(normVel * 0.4, burstTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, burstTime + 0.03);
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                osc.start(burstTime);
+                osc.stop(burstTime + 0.035);
+              }
+            }
+            break;
+          case 7: // Crash Cymbal
+            {
+              const bufferSize = this.ctx.sampleRate * 0.6;
+              const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+              const data = buffer.getChannelData(0);
+              for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+              }
+              const noise = this.ctx.createBufferSource();
+              noise.buffer = buffer;
+              const filter = this.ctx.createBiquadFilter();
+              filter.type = 'highpass';
+              filter.frequency.setValueAtTime(3500, now);
+              const gain = this.ctx.createGain();
+              gain.gain.setValueAtTime(normVel * 0.5, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+              noise.connect(filter);
+              filter.connect(gain);
+              gain.connect(this.masterGain);
+              noise.start(now);
+            }
+            break;
+        }
+      }
+    }
+
+    const audio = new AudioEngine();
+
+    /* ==========================================================================
+       HARDWARE CHECKLIST TRACKER
+       ========================================================================== */
+    const checklist = {
+      keys: new Set(),
+      pads: new Set(),
+      pitchBendUp: false,
+      pitchBendDown: false,
+      modWheelMoved: false,
+      knobsTested: new Set(),
+      sustainPressed: false,
+
+      markKey(keyIndex) {
+        this.keys.add(keyIndex);
+        const count = Math.min(49, this.keys.size);
+        const countEl = document.getElementById('testedKeysCount');
+        if (countEl) countEl.textContent = count;
+        
+        if (physicalKeyDivs[keyIndex]) {
+          physicalKeyDivs[keyIndex].classList.add('key-tested');
+        }
+
+        const missingHelper = document.getElementById('missingKeysHelp');
+        if (missingHelper) {
+          if (this.keys.size >= 40 && this.keys.size < 49) {
+            missingHelper.classList.remove('hidden');
+            missingHelper.textContent = `Faltan ${49 - this.keys.size} tecla(s) por tocar`;
+          } else if (this.keys.size >= 49) {
+            missingHelper.classList.add('hidden');
+            this.setCardSuccess('checkCardKeys', 'iconCheckKeys');
+          }
+        }
+        this.updateTotal();
+      },
+
+      markPad(padIdx) {
+        this.pads.add(padIdx);
+        const countEl = document.getElementById('testedPadsCount');
+        if (countEl) countEl.textContent = this.pads.size;
+        if (this.pads.size >= 8) {
+          this.setCardSuccess('checkCardPads', 'iconCheckPads');
+        }
+        this.updateTotal();
+      },
+
+      markPitch(value) {
+        if (value > 2000) this.pitchBendUp = true;
+        if (value < -2000) this.pitchBendDown = true;
+        const label = document.getElementById('testedPitchLabel');
+        if (label && (this.pitchBendUp || this.pitchBendDown)) {
+          label.textContent = (this.pitchBendUp && this.pitchBendDown) ? 'Arriba & Abajo OK' : 'En prueba...';
+          label.className = 'text-xs font-bold text-cyan-400';
+        }
+        if (this.pitchBendUp && this.pitchBendDown) {
+          this.setCardSuccess('checkCardPitch', 'iconCheckPitch');
+        }
+        this.updateTotal();
+      },
+
+      markMod(val) {
+        if (val > 10) {
+          this.modWheelMoved = true;
+          const label = document.getElementById('testedModLabel');
+          if (label) {
+            label.textContent = 'Barrido OK';
+            label.className = 'text-xs font-bold text-cyan-400';
+          }
+          this.setCardSuccess('checkCardMod', 'iconCheckMod');
+          this.updateTotal();
+        }
+      },
+
+      markKnob(knobIndex) {
+        this.knobsTested.add(knobIndex);
+        const countEl = document.getElementById('testedKnobsCount');
+        if (countEl) countEl.textContent = this.knobsTested.size;
+        if (this.knobsTested.size >= 4) {
+          this.setCardSuccess('checkCardKnobs', 'iconCheckKnobs');
+        }
+        this.updateTotal();
+      },
+
+      markSustain() {
+        this.sustainPressed = true;
+        const label = document.getElementById('testedSustainLabel');
+        if (label) {
+          label.textContent = 'Pedal Probado OK';
+          label.className = 'text-xs font-bold text-cyan-400';
+        }
+        this.setCardSuccess('checkCardSustain', 'iconCheckSustain');
+        this.updateTotal();
+      },
+
+      setCardSuccess(cardId, iconId) {
+        const card = document.getElementById(cardId);
+        const icon = document.getElementById(iconId);
+        if (card) card.classList.add('border-cyan-500/50', 'bg-cyan-950/20');
+        if (icon) {
+          icon.className = 'w-6 h-6 rounded-full bg-cyan-500 text-slate-950 flex items-center justify-center text-xs font-black shadow-lg shadow-cyan-500/30';
+        }
+      },
+
+      updateTotal() {
+        let score = 0;
+        score += Math.min(1, this.keys.size / 49) * 45;
+        score += (this.pads.size / 8) * 20;
+        score += (this.pitchBendUp && this.pitchBendDown ? 10 : (this.pitchBendUp || this.pitchBendDown ? 5 : 0));
+        score += (this.modWheelMoved ? 10 : 0);
+        score += (this.knobsTested.size / 4) * 15;
+        const pct = Math.round(score);
+        const pctEl = document.getElementById('checklistPercentage');
+        if (pctEl) pctEl.textContent = `${pct}% verificado`;
+
+        updatePendingDiagnoseUI();
+      },
+
+      forceComplete() {
+        for (let i = 0; i < 49; i++) {
+          this.keys.add(i);
+          if (physicalKeyDivs[i]) physicalKeyDivs[i].classList.add('key-tested');
+        }
+        for (let p = 0; p < 8; p++) this.pads.add(p);
+        this.pitchBendUp = true;
+        this.pitchBendDown = true;
+        this.modWheelMoved = true;
+        for (let k = 0; k < 4; k++) this.knobsTested.add(k);
+        this.sustainPressed = true;
+
+        const keysCount = document.getElementById('testedKeysCount');
+        const padsCount = document.getElementById('testedPadsCount');
+        const knobsCount = document.getElementById('testedKnobsCount');
+        const pitchLabel = document.getElementById('testedPitchLabel');
+        const modLabel = document.getElementById('testedModLabel');
+        const sustainLabel = document.getElementById('testedSustainLabel');
+
+        if (keysCount) keysCount.textContent = '49';
+        if (padsCount) padsCount.textContent = '8';
+        if (knobsCount) knobsCount.textContent = '4';
+        if (pitchLabel) {
+          pitchLabel.textContent = '100% Verificado';
+          pitchLabel.className = 'text-xs font-bold text-cyan-400';
+        }
+        if (modLabel) {
+          modLabel.textContent = '100% Verificado';
+          modLabel.className = 'text-xs font-bold text-cyan-400';
+        }
+        if (sustainLabel) {
+          sustainLabel.textContent = '100% Verificado';
+          sustainLabel.className = 'text-xs font-bold text-cyan-400';
+        }
+
+        ['checkCardKeys', 'checkCardPads', 'checkCardPitch', 'checkCardMod', 'checkCardKnobs', 'checkCardSustain'].forEach(id => {
+          this.setCardSuccess(id, 'icon' + id.replace('checkCard', 'Check'));
+        });
+        const pctEl = document.getElementById('checklistPercentage');
+        if (pctEl) pctEl.textContent = '100% verificado';
+        updatePendingDiagnoseUI();
+      },
+
+      reset() {
+        this.keys.clear();
+        this.pads.clear();
+        this.pitchBendUp = false;
+        this.pitchBendDown = false;
+        this.modWheelMoved = false;
+        this.knobsTested.clear();
+        this.sustainPressed = false;
+
+        physicalKeyDivs.forEach(div => {
+          if (div) div.classList.remove('key-tested');
+        });
+
+        const keysCount = document.getElementById('testedKeysCount');
+        const padsCount = document.getElementById('testedPadsCount');
+        const knobsCount = document.getElementById('testedKnobsCount');
+        const pitchLabel = document.getElementById('testedPitchLabel');
+        const modLabel = document.getElementById('testedModLabel');
+        const sustainLabel = document.getElementById('testedSustainLabel');
+        const missingHelper = document.getElementById('missingKeysHelp');
+
+        if (keysCount) keysCount.textContent = '0';
+        if (padsCount) padsCount.textContent = '0';
+        if (knobsCount) knobsCount.textContent = '0';
+        if (pitchLabel) {
+          pitchLabel.textContent = 'Sin mover';
+          pitchLabel.className = 'text-xs font-bold text-slate-400';
+        }
+        if (modLabel) {
+          modLabel.textContent = 'Sin mover';
+          modLabel.className = 'text-xs font-bold text-slate-400';
+        }
+        if (sustainLabel) {
+          sustainLabel.textContent = 'Opcional';
+          sustainLabel.className = 'text-xs font-bold text-slate-400';
+        }
+        if (missingHelper) missingHelper.classList.add('hidden');
+
+        ['checkCardKeys', 'checkCardPads', 'checkCardPitch', 'checkCardMod', 'checkCardKnobs', 'checkCardSustain'].forEach(id => {
+          const card = document.getElementById(id);
+          if (card) {
+            card.className = 'bg-slate-950/80 border border-slate-800 rounded-lg p-2 flex items-center justify-between transition-colors';
+          }
+        });
+        ['iconCheckKeys', 'iconCheckPads', 'iconCheckPitch', 'iconCheckMod', 'iconCheckKnobs', 'iconCheckSustain'].forEach(id => {
+          const icon = document.getElementById(id);
+          if (icon) {
+            icon.className = 'w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold';
+          }
+        });
+
+        this.updateTotal();
+      }
+    };
+
+    /* ==========================================================================
+       DYNAMIC PENDING DIAGNOSTIC UI
+       ========================================================================== */
+    let highlightMissingKeys = false;
+
+    function updatePendingDiagnoseUI() {
+      const listEl = document.getElementById('pendingBadgesList');
+      const bannerComplete = document.getElementById('allCompleteBanner');
+      const pendingHeader = document.getElementById('pendingHeader');
+      const countBadge = document.getElementById('pendingItemsCountBadge');
+
+      if (!listEl || !bannerComplete || !pendingHeader || !countBadge) return;
+
+      const pendingItems = [];
+
+      const missingKeysCount = 49 - checklist.keys.size;
+      if (missingKeysCount > 0) {
+        if (missingKeysCount === 49) {
+          pendingItems.push({
+            icon: '🎹',
+            title: '49 Teclas',
+            desc: 'Haz un barrido de la primera a la última tecla',
+            action: 'Faltan todas'
+          });
+        } else if (missingKeysCount <= 8) {
+          const missingKeyNames = [];
+          for (let i = 0; i < TOTAL_KEYS; i++) {
+            if (!checklist.keys.has(i)) {
+              const noteNum = baseOctaveOffset + i;
+              const name = `${NOTE_NAMES[noteNum % 12]}${Math.floor(noteNum / 12) - 1}`;
+              missingKeyNames.push(name);
+            }
+          }
+          pendingItems.push({
+            icon: '🎹',
+            title: `Faltan ${missingKeysCount} tecla(s)`,
+            desc: `Específicamente: ${missingKeyNames.join(', ')}`,
+            action: 'Tócalas en el teclado'
+          });
+        } else {
+          pendingItems.push({
+            icon: '🎹',
+            title: `Teclas (${checklist.keys.size}/49)`,
+            desc: `Aún no se han presionado ${missingKeysCount} teclas`,
+            action: 'Barrido cromático'
+          });
+        }
+      }
+
+      const missingPads = [];
+      for (let p = 0; p < 8; p++) {
+        if (!checklist.pads.has(p)) missingPads.push(`Pad ${p + 1}`);
+      }
+      if (missingPads.length > 0) {
+        pendingItems.push({
+          icon: '🥁',
+          title: `Pads (${checklist.pads.size}/8)`,
+          desc: `Falta golpear: ${missingPads.join(', ')}`,
+          action: 'Golpear con fuerza'
+        });
+      }
+
+      if (!checklist.pitchBendUp && !checklist.pitchBendDown) {
+        pendingItems.push({
+          icon: '↕️',
+          title: 'Pitch Bend',
+          desc: 'Mueve la rueda hacia arriba y hacia abajo para verificar el resorte',
+          action: 'Mover rueda izquierda'
+        });
+      } else if (!checklist.pitchBendUp) {
+        pendingItems.push({
+          icon: '⬆️',
+          title: 'Pitch Bend Arriba',
+          desc: 'Falta empujar la rueda hacia arriba (+) al máximo',
+          action: 'Empujar arriba'
+        });
+      } else if (!checklist.pitchBendDown) {
+        pendingItems.push({
+          icon: '⬇️',
+          title: 'Pitch Bend Abajo',
+          desc: 'Falta bajar la rueda hacia abajo (-) al máximo',
+          action: 'Bajar rueda'
+        });
+      }
+
+      if (!checklist.modWheelMoved) {
+        pendingItems.push({
+          icon: '🌊',
+          title: 'Rueda Modulación (CC 1)',
+          desc: 'Sube la rueda derecha para comprobar el vibrato audible (0 a 127)',
+          action: 'Subir rueda derecha'
+        });
+      }
+
+      const missingKnobs = [];
+      for (let k = 0; k < 4; k++) {
+        if (!checklist.knobsTested.has(k)) missingKnobs.push(`Knob ${k + 1}`);
+      }
+      if (missingKnobs.length > 0) {
+        pendingItems.push({
+          icon: '🎛️',
+          title: `Perillas (${checklist.knobsTested.size}/4)`,
+          desc: `Falta girar: ${missingKnobs.join(', ')}`,
+          action: 'Girar de 0 a 127'
+        });
+      }
+
+      if (!checklist.sustainPressed) {
+        pendingItems.push({
+          icon: '🦶',
+          title: 'Pedal Sustain (Opcional)',
+          desc: 'Pisa el pedal conectado al jack trasero si dispones de uno',
+          action: 'Opcional (CC 64)',
+          optional: true
+        });
+      }
+
+      const essentialPending = pendingItems.filter(item => !item.optional);
+
+      if (essentialPending.length === 0) {
+        listEl.innerHTML = '';
+        bannerComplete.classList.remove('hidden');
+        pendingHeader.classList.add('hidden');
+      } else {
+        bannerComplete.classList.add('hidden');
+        pendingHeader.classList.remove('hidden');
+        countBadge.textContent = `${essentialPending.length} componente(s) por probar`;
+
+        listEl.innerHTML = pendingItems.map(item => `
+          <div class="flex items-center gap-2.5 px-3 py-2 rounded-lg ${item.optional ? 'bg-slate-900/60 border border-slate-800 text-slate-400' : 'bg-amber-950/40 border border-amber-600/40 text-amber-200'}">
+            <span class="text-base">${item.icon}</span>
+            <div class="leading-tight">
+              <div class="font-bold flex items-center gap-1.5 ${item.optional ? 'text-slate-300' : 'text-amber-300'}">
+                <span>${item.title}</span>
+                <span class="text-[9px] uppercase px-1.5 py-0.2 rounded font-mono ${item.optional ? 'bg-slate-800 text-slate-400' : 'bg-amber-900/60 text-amber-300 border border-amber-700/50'}">${item.action}</span>
+              </div>
+              <p class="text-[11px] ${item.optional ? 'text-slate-400' : 'text-amber-200/80'}">${item.desc}</p>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    /* ==========================================================================
+       KEYBOARD, PADS, KNOBS & WHEELS LOGIC
+       ========================================================================== */
+    const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    let baseOctaveOffset = 36;
+    const TOTAL_KEYS = 49;
+    const keyboardEl = document.getElementById('keyboardContainer');
+    let physicalKeyDivs = [];
+
+    function renderKeyboard() {
+      if (!keyboardEl) return;
+      keyboardEl.innerHTML = '';
+      physicalKeyDivs = [];
+
+      let whiteKeyCount = 0;
+      for (let i = 0; i < TOTAL_KEYS; i++) {
+        const noteNum = baseOctaveOffset + i;
+        const noteName = NOTE_NAMES[noteNum % 12];
+        if (!noteName.includes('#')) whiteKeyCount++;
+      }
+
+      let wIdx = 0;
+      for (let i = 0; i < TOTAL_KEYS; i++) {
+        const noteNum = baseOctaveOffset + i;
+        const noteName = NOTE_NAMES[noteNum % 12];
+        const octave = Math.floor(noteNum / 12) - 1;
+        const fullName = `${noteName}${octave}`;
+        const isBlack = noteName.includes('#');
+
+        if (!isBlack) {
+          const keyDiv = document.createElement('div');
+          keyDiv.dataset.keyIndex = i;
+          keyDiv.dataset.note = noteNum;
+          keyDiv.dataset.name = fullName;
+          keyDiv.className = 'key-white relative flex-1 h-full rounded-b-md border-r border-slate-400/40 flex flex-col justify-end items-center pb-2 text-[10px] text-slate-600 font-bold transition-all cursor-pointer hover:bg-slate-100';
+          if (checklist.keys.has(i)) keyDiv.classList.add('key-tested');
+          keyDiv.innerHTML = `<span class="opacity-70 pointer-events-none">${fullName}</span>`;
+          keyboardEl.appendChild(keyDiv);
+          physicalKeyDivs[i] = keyDiv;
+          wIdx++;
+        }
+      }
+
+      wIdx = 0;
+      for (let i = 0; i < TOTAL_KEYS; i++) {
+        const noteNum = baseOctaveOffset + i;
+        const noteName = NOTE_NAMES[noteNum % 12];
+        const octave = Math.floor(noteNum / 12) - 1;
+        const fullName = `${noteName}${octave}`;
+        const isBlack = noteName.includes('#');
+
+        if (isBlack) {
+          const blackKeyDiv = document.createElement('div');
+          blackKeyDiv.dataset.keyIndex = i;
+          blackKeyDiv.dataset.note = noteNum;
+          blackKeyDiv.dataset.name = fullName;
+          blackKeyDiv.className = 'key-black absolute z-10 w-[2.8%] h-[60%] rounded-b-md border border-slate-900 cursor-pointer flex flex-col justify-end items-center pb-1 text-[8px] font-mono text-slate-400 transition-all hover:bg-slate-700';
+          if (checklist.keys.has(i)) blackKeyDiv.classList.add('key-tested');
+          blackKeyDiv.innerHTML = `<span class="opacity-80 pointer-events-none">${noteName}</span>`;
+
+          const whiteWidthPercent = 100 / whiteKeyCount;
+          const leftPercent = (wIdx * whiteWidthPercent) - (whiteWidthPercent * 0.35);
+          blackKeyDiv.style.left = `${leftPercent}%`;
+
+          keyboardEl.appendChild(blackKeyDiv);
+          physicalKeyDivs[i] = blackKeyDiv;
+        } else {
+          wIdx++;
+        }
+      }
+
+      const baseNoteName = NOTE_NAMES[baseOctaveOffset % 12];
+      const baseOctNum = Math.floor(baseOctaveOffset / 12) - 1;
+      const endNoteName = NOTE_NAMES[(baseOctaveOffset + 48) % 12];
+      const endOctNum = Math.floor((baseOctaveOffset + 48) / 12) - 1;
+
+      const octaveLabel = document.getElementById('currentOctaveShiftLabel');
+      if (octaveLabel) octaveLabel.textContent = `${baseNoteName}${baseOctNum}`;
+
+      const octaveIndicator = document.getElementById('octaveIndicator');
+      if (octaveIndicator) {
+        octaveIndicator.innerHTML = `Rango Teclado: <strong class="text-cyan-400">${baseNoteName}${baseOctNum} (${baseOctaveOffset}) - ${endNoteName}${endOctNum} (${baseOctaveOffset + 48})</strong>`;
+      }
+    }
+
+    document.getElementById('octaveUpBtn').addEventListener('click', () => {
+      if (baseOctaveOffset < 60) {
+        baseOctaveOffset += 12;
+        renderKeyboard();
+      }
+    });
+
+    document.getElementById('octaveDownBtn').addEventListener('click', () => {
+      if (baseOctaveOffset > 12) {
+        baseOctaveOffset -= 12;
+        renderKeyboard();
+      }
+    });
+
+    let autoOctaveEnabled = true;
+    document.getElementById('autoOctaveBtn').addEventListener('click', () => {
+      autoOctaveEnabled = !autoOctaveEnabled;
+      const btn = document.getElementById('autoOctaveBtn');
+      btn.className = autoOctaveEnabled
+        ? 'ml-1 text-[9px] bg-cyan-950 text-cyan-300 border border-cyan-800/60 px-1.5 py-0.5 rounded hover:bg-cyan-900'
+        : 'ml-1 text-[9px] bg-slate-800 text-slate-500 border border-slate-700 px-1.5 py-0.5 rounded';
+    });
+
+    document.getElementById('panicBtn').addEventListener('click', () => {
+      audio.allNotesOff();
+      document.querySelectorAll('.key-white.active, .key-black.active').forEach(k => k.classList.remove('active'));
+      const badge = document.getElementById('sustainStatusBadge');
+      if (badge) {
+        badge.textContent = 'SUSTAIN: OFF';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700';
+      }
+      addMidiLog('Sistema', 'PANIC', '-', 'Todas', 0, 'Audio silenciado de emergencia');
+    });
+
+    function highlightKeyVisual(noteNum, velocity, isDown) {
+      let keyIndex = noteNum - baseOctaveOffset;
+
+      if (autoOctaveEnabled && (keyIndex < 0 || keyIndex >= TOTAL_KEYS)) {
+        if (keyIndex < 0 && baseOctaveOffset >= 12) {
+          while (noteNum < baseOctaveOffset && baseOctaveOffset > 12) {
+            baseOctaveOffset -= 12;
+          }
+          renderKeyboard();
+          keyIndex = noteNum - baseOctaveOffset;
+        } else if (keyIndex >= TOTAL_KEYS && baseOctaveOffset <= 60) {
+          while (noteNum >= (baseOctaveOffset + TOTAL_KEYS) && baseOctaveOffset <= 60) {
+            baseOctaveOffset += 12;
+          }
+          renderKeyboard();
+          keyIndex = noteNum - baseOctaveOffset;
+        }
+      }
+
+      const normalizedIndex = ((keyIndex % TOTAL_KEYS) + TOTAL_KEYS) % TOTAL_KEYS;
+      const key = physicalKeyDivs[normalizedIndex];
+
+      if (isDown) {
+        if (key) key.classList.add('active');
+        const noteName = `${NOTE_NAMES[noteNum % 12]}${Math.floor(noteNum / 12) - 1}`;
+        const activeDisplay = document.getElementById('activeNoteDisplay');
+        if (activeDisplay) {
+          activeDisplay.textContent = `Nota: ${noteName} (#${noteNum}) | Tecla Física: ${normalizedIndex + 1}/49 | Velocity: ${velocity}`;
+        }
+        checklist.markKey(normalizedIndex);
+      } else {
+        if (key) key.classList.remove('active');
+      }
+    }
+
+    keyboardEl.addEventListener('mousedown', (e) => {
+      const target = e.target.closest('[data-note]');
+      if (!target) return;
+      const note = parseInt(target.dataset.note, 10);
+      audio.noteOn(note, 105);
+      highlightKeyVisual(note, 105, true);
+      addMidiLog('Web Click', 'Note On', 1, target.dataset.name, 105, 'Prueba táctil virtual');
+
+      const onMouseUp = () => {
+        audio.noteOff(note);
+        highlightKeyVisual(note, 0, false);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+      window.addEventListener('mouseup', onMouseUp);
+    });
+
+    // Pads
+    const padButtons = document.querySelectorAll('.drum-pad');
+    const PAD_PRESETS = {
+      gm: [36, 38, 42, 46, 41, 45, 49, 51],
+      factory48: [48, 49, 50, 51, 52, 53, 54, 55],
+      chromatic36: [36, 37, 38, 39, 40, 41, 42, 43]
+    };
+    let padNoteMap = [...PAD_PRESETS.gm];
+    let padChannelMap = [-1, -1, -1, -1, -1, -1, -1, -1];
+    let padWizardStep = -1;
+
+    function setPadPreset(mode) {
+      stopPadWizard();
+      if (PAD_PRESETS[mode]) {
+        padNoteMap = [...PAD_PRESETS[mode]];
+        padChannelMap = [-1, -1, -1, -1, -1, -1, -1, -1];
+        for (let i = 0; i < 8; i++) updatePadLabel(i, padNoteMap[i]);
+      }
+    }
+
+    function updatePadLabel(padIdx, noteVal) {
+      const label = document.getElementById(`padNoteLabel${padIdx}`);
+      if (label) {
+        label.textContent = noteVal === '--' ? 'Pendiente' : `#${noteVal}`;
+      }
+    }
+
+    const wizardPrompt = document.getElementById('padWizardPrompt');
+    const wizardText = document.getElementById('padWizardPromptText');
+    const wizardBtn = document.getElementById('learnPadsWizardBtn');
+
+    function startPadWizard() {
+      padWizardStep = 0;
+      if (wizardPrompt) wizardPrompt.classList.remove('hidden');
+      if (wizardBtn) {
+        wizardBtn.classList.remove('bg-amber-500', 'text-slate-950');
+        wizardBtn.classList.add('bg-red-500', 'text-white');
+        wizardBtn.innerHTML = '✕ <span>Cancelar</span>';
+      }
+      highlightPadWizardStep();
+    }
+
+    function stopPadWizard() {
+      padWizardStep = -1;
+      if (wizardPrompt) wizardPrompt.classList.add('hidden');
+      if (wizardBtn) {
+        wizardBtn.classList.remove('bg-red-500', 'text-white');
+        wizardBtn.classList.add('bg-amber-500', 'text-slate-950');
+        wizardBtn.innerHTML = '🎯 <span>Asignar 1 a 8</span>';
+      }
+      padButtons.forEach(b => b.classList.remove('ring-2', 'ring-amber-400', 'animate-pulse'));
+    }
+
+    function highlightPadWizardStep() {
+      padButtons.forEach((b, idx) => {
+        if (idx === padWizardStep) {
+          b.classList.add('ring-2', 'ring-amber-400', 'animate-pulse');
+        } else {
+          b.classList.remove('ring-2', 'ring-amber-400', 'animate-pulse');
+        }
+      });
+      if (padWizardStep >= 0 && padWizardStep < 8 && wizardText) {
+        wizardText.innerHTML = `👉 Golpea el <strong class="text-amber-300 uppercase">PAD ${padWizardStep + 1}</strong> físico en tu Alesis...`;
+      }
+    }
+
+    function advancePadWizard() {
+      padWizardStep++;
+      if (padWizardStep < 8) {
+        highlightPadWizardStep();
+      } else {
+        if (wizardText) {
+          wizardText.innerHTML = '🎉 <strong class="text-emerald-300">¡Los 8 Pads fueron configurados en orden!</strong>';
+        }
+        padButtons.forEach(b => b.classList.remove('ring-2', 'ring-amber-400', 'animate-pulse'));
+        setTimeout(() => {
+          stopPadWizard();
+        }, 1800);
+      }
+    }
+
+    if (wizardBtn) {
+      wizardBtn.addEventListener('click', () => {
+        if (padWizardStep === -1) {
+          startPadWizard();
+        } else {
+          stopPadWizard();
+        }
+      });
+    }
+
+    const cancelWizardBtn = document.getElementById('cancelPadWizardBtn');
+    if (cancelWizardBtn) {
+      cancelWizardBtn.addEventListener('click', stopPadWizard);
+    }
+
+    const padMapPresetSelect = document.getElementById('padMapPreset');
+    if (padMapPresetSelect) {
+      padMapPresetSelect.addEventListener('change', (e) => setPadPreset(e.target.value));
+    }
+
+    const resetPadsBtn = document.getElementById('resetPadsBtn');
+    if (resetPadsBtn) {
+      resetPadsBtn.addEventListener('click', () => {
+        setPadPreset(padMapPresetSelect ? padMapPresetSelect.value : 'gm');
+        checklist.pads.clear();
+        const testedCount = document.getElementById('testedPadsCount');
+        if (testedCount) testedCount.textContent = '0';
+        checklist.updateTotal();
+      });
+    }
+
+    padButtons.forEach(btn => {
+      btn.addEventListener('mousedown', () => {
+        const padIdx = parseInt(btn.dataset.pad, 10);
+        triggerPadHit(padIdx, 110);
+        const assignedNote = padNoteMap[padIdx] !== -1 ? `#${padNoteMap[padIdx]}` : `PAD ${padIdx + 1}`;
+        addMidiLog('Web Click', 'Pad Hit', 10, assignedNote, 110, 'Prueba de Pad virtual');
+      });
+    });
+
+    function resolvePadIndex(noteNumber, channel) {
+      for (let i = 0; i < 8; i++) {
+        if (padNoteMap[i] === noteNumber) {
+          if (padChannelMap[i] === -1 || padChannelMap[i] === channel) {
+            return i;
+          }
+        }
+      }
+      if (channel === 10) {
+        const gmIdx = PAD_PRESETS.gm.indexOf(noteNumber);
+        if (gmIdx !== -1) return gmIdx;
+        return (noteNumber % 8);
+      }
+      return -1;
+    }
+
+    function triggerPadHit(padIndex, velocity = 100) {
+      if (padIndex < 0 || padIndex >= 8) return;
+      const padEl = padButtons[padIndex];
+      audio.triggerDrum(padIndex, velocity);
+      checklist.markPad(padIndex);
+
+      if (padEl) {
+        padEl.style.backgroundColor = '#f59e0b';
+        padEl.style.boxShadow = '0 0 20px rgba(245, 158, 11, 0.9)';
+        const velText = padEl.querySelector('.pad-vel');
+        if (velText) velText.textContent = velocity;
+
+        setTimeout(() => {
+          padEl.style.backgroundColor = '';
+          padEl.style.boxShadow = '';
+        }, 150);
+      }
+    }
+
+    // Knobs
+    const knobAssignments = [20, 21, 22, 23];
+    const knobValues = [90, 20, 25, 40];
+
+    function updateKnobVisual(knobIndex, val127) {
+      knobValues[knobIndex] = val127;
+      const valEl = document.getElementById(`knobVal${knobIndex + 1}`);
+      if (valEl) valEl.textContent = val127;
+
+      const pct = val127 / 127;
+      const offset = 100 - (pct * 75);
+      const arc = document.getElementById(`knobArc${knobIndex + 1}`);
+      if (arc) arc.setAttribute('stroke-dashoffset', offset);
+
+      const deg = -135 + (pct * 270);
+      const indicator = document.getElementById(`knobIndicator${knobIndex + 1}`);
+      if (indicator) indicator.style.transform = `translateY(-6px) rotate(${deg}deg)`;
+
+      checklist.markKnob(knobIndex);
+
+      if (knobIndex === 0) audio.setFilterCutoff(pct);
+      if (knobIndex === 1) audio.setFilterResonance(pct);
+      if (knobIndex === 2) audio.setDelayMix(pct);
+      if (knobIndex === 3) audio.setReleaseTime(pct);
+    }
+
+    // Wheels
+    function setPitchBendVisual(raw14bit) {
+      const centered = raw14bit - 8192;
+      const norm = centered / 8192;
+      const display = document.getElementById('pitchBendValDisplay');
+      if (display) display.textContent = (centered >= 0 ? '+' : '') + centered;
+
+      const travel = 44;
+      const topPx = 44 - (norm * travel);
+      const handle = document.getElementById('pitchWheelHandle');
+      if (handle) handle.style.top = `${topPx}px`;
+
+      audio.setPitchBend(norm);
+      checklist.markPitch(centered);
+    }
+
+    function setModulationVisual(val127) {
+      const display = document.getElementById('modValDisplay');
+      if (display) display.textContent = val127;
+
+      const pct = (val127 / 127) * 100;
+      const fill = document.getElementById('modWheelFill');
+      if (fill) fill.style.height = `${pct}%`;
+
+      const travel = 88;
+      const bottomPx = (val127 / 127) * travel;
+      const handle = document.getElementById('modWheelHandle');
+      if (handle) handle.style.bottom = `${bottomPx}px`;
+
+      audio.setModulation(val127 / 127);
+      checklist.markMod(val127);
+    }
+
+    // Logs
+    const logTableBody = document.getElementById('midiLogTableBody');
+    let logCount = 0;
+
+    function addMidiLog(source, type, channel, data1, data2, desc) {
+      if (!logTableBody) return;
+      if (logCount === 0) {
+        logTableBody.innerHTML = '';
+      }
+      logCount++;
+
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-slate-800/40 transition-colors font-mono';
+
+      const d = new Date();
+      const timeStr = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}.${d.getMilliseconds().toString().padStart(3, '0')}`;
+
+      let typeColor = 'text-cyan-400';
+      if (type.includes('Off')) typeColor = 'text-slate-500';
+      if (type.includes('Pitch')) typeColor = 'text-pink-400';
+      if (type.includes('CC') || type.includes('Mod')) typeColor = 'text-amber-400';
+      if (type.includes('Pad')) typeColor = 'text-emerald-400';
+
+      tr.innerHTML = `
+        <td class="py-1 px-3 text-slate-500">${timeStr}</td>
+        <td class="py-1 px-3 font-bold ${typeColor}">${type}</td>
+        <td class="py-1 px-3 text-slate-400">${channel}</td>
+        <td class="py-1 px-3 text-slate-200">${data1}</td>
+        <td class="py-1 px-3 font-semibold text-cyan-300">${data2}</td>
+        <td class="py-1 px-3 text-slate-400 text-[10px]">${desc}</td>
+      `;
+
+      logTableBody.insertBefore(tr, logTableBody.firstChild);
+
+      if (logTableBody.children.length > 60) {
+        logTableBody.removeChild(logTableBody.lastChild);
+      }
+    }
+
+    document.getElementById('clearLogBtn').addEventListener('click', () => {
+      if (logTableBody) {
+        logTableBody.innerHTML = '<tr class="text-slate-500"><td colspan="6" class="py-4 text-center">Registro limpio. Listo para recibir eventos MIDI...</td></tr>';
+      }
+      logCount = 0;
+    });
+
+    // Web MIDI
+    let midiAccess = null;
+
+    async function initWebMIDI() {
+      audio.init();
+      audio.resume();
+
+      if (!navigator.requestMIDIAccess) {
+        updateMidiStatus(false, 'Navegador no compatible con Web MIDI (Usa Chrome, Edge, Brave u Opera)');
+        return;
+      }
+
+      try {
+        midiAccess = await navigator.requestMIDIAccess({ sysex: false });
+        handleMidiStateChange();
+        midiAccess.onstatechange = handleMidiStateChange;
+      } catch (err) {
+        console.warn('MIDI sandbox or permission restriction:', err.message);
+        const banner = document.getElementById('sandboxWarningBanner');
+        if (banner) banner.classList.remove('hidden');
+        updateMidiStatus(false, 'Acceso MIDI restringido por el navegador.');
+      }
+    }
+
+    function handleMidiStateChange() {
+      if (!midiAccess) return;
+      const inputs = Array.from(midiAccess.inputs.values());
+      if (inputs.length === 0) {
+        updateMidiStatus(false, 'Sin dispositivos detectados. Conecta tu Alesis V49 por USB.');
+        return;
+      }
+
+      const preferredInput = inputs.find(i => i.name && i.name.toLowerCase().includes('alesis')) || inputs[0];
+
+      inputs.forEach(input => {
+        input.onmidimessage = onMIDIMessage;
+      });
+
+      updateMidiStatus(true, `Conectado: ${preferredInput.name || 'Dispositivo MIDI'}`);
+      const connectBtnText = document.getElementById('connectBtnText');
+      const connectBtn = document.getElementById('connectMidiBtn');
+      if (connectBtnText) connectBtnText.textContent = 'Conectado';
+      if (connectBtn) {
+        connectBtn.classList.remove('from-cyan-500', 'to-blue-600');
+        connectBtn.classList.add('bg-emerald-600', 'text-white');
+      }
+    }
+
+    function updateMidiStatus(connected, message) {
+      const led = document.getElementById('statusLed');
+      const text = document.getElementById('statusText');
+      if (connected) {
+        if (led) led.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-md shadow-emerald-400/80';
+        if (text) {
+          text.className = 'text-emerald-300 font-semibold';
+          text.textContent = message;
+        }
+      } else {
+        if (led) led.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse';
+        if (text) {
+          text.className = 'text-slate-300 font-medium';
+          text.textContent = message;
+        }
+      }
+    }
+
+    function onMIDIMessage(event) {
+      const data = event.data;
+      if (!data || data.length < 2) return;
+
+      const status = data[0];
+      const command = status >> 4;
+      const channel = (status & 0x0F) + 1;
+      const data1 = data[1];
+      const data2 = data.length > 2 ? data[2] : 0;
+
+      switch (command) {
+        case 9:
+          if (data2 > 0) {
+            handleNoteOn(data1, data2, channel);
+          } else {
+            handleNoteOff(data1, channel);
+          }
+          break;
+        case 8:
+          handleNoteOff(data1, channel);
+          break;
+        case 11:
+          handleControlChange(data1, data2, channel);
+          break;
+        case 14:
+          {
+            const pitchVal14 = (data2 << 7) | data1;
+            setPitchBendVisual(pitchVal14);
+            const centered = pitchVal14 - 8192;
+            addMidiLog('Alesis V49', 'Pitch Bend', channel, `14-bit (${pitchVal14})`, (centered >= 0 ? '+' : '') + centered, 'Rueda de tono con resorte');
+          }
+          break;
+        default:
+          break;
+      }
+    }
+
+    function handleNoteOn(note, velocity, channel) {
+      if (padWizardStep >= 0 && padWizardStep < 8) {
+        padNoteMap[padWizardStep] = note;
+        padChannelMap[padWizardStep] = channel;
+        updatePadLabel(padWizardStep, note);
+        triggerPadHit(padWizardStep, velocity);
+        addMidiLog('Alesis V49', `Pad ${padWizardStep + 1} Asignado`, channel, `Nota ${note}`, velocity, `Asignado correctamente a Pad ${padWizardStep + 1}`);
+        advancePadWizard();
+        return;
+      }
+
+      const targetPad = resolvePadIndex(note, channel);
+      if (targetPad !== -1 || channel === 10) {
+        const padIdx = (targetPad !== -1) ? targetPad : (note % 8);
+        triggerPadHit(padIdx, velocity);
+        addMidiLog('Alesis V49', `Pad ${padIdx + 1}`, channel, `Nota ${note}`, velocity, 'Golpe de Pad percusión');
+        return;
+      }
+
+      highlightKeyVisual(note, velocity, true);
+      audio.noteOn(note, velocity);
+
+      const noteName = `${NOTE_NAMES[note % 12]}${Math.floor(note / 12) - 1}`;
+      addMidiLog('Alesis V49', 'Note On', channel, `${noteName} (#${note})`, velocity, 'Tecla pulsada con dinámica');
+    }
+
+    function handleNoteOff(note, channel) {
+      if (channel === 10) return;
+
+      highlightKeyVisual(note, 0, false);
+      audio.noteOff(note);
+
+      const noteName = `${NOTE_NAMES[note % 12]}${Math.floor(note / 12) - 1}`;
+      addMidiLog('Alesis V49', 'Note Off', channel, `${noteName} (#${note})`, 0, 'Tecla liberada');
+    }
+
+    function handleControlChange(ccNumber, value, channel) {
+      if (ccNumber === 1) {
+        setModulationVisual(value);
+        addMidiLog('Alesis V49', 'Mod Wheel (CC 1)', channel, 'CC 1', value, 'Vibrato modulado en tiempo real');
+        return;
+      }
+
+      if (ccNumber === 64) {
+        const isDown = value >= 64;
+        audio.setSustain(isDown);
+        const badge = document.getElementById('sustainStatusBadge');
+        if (badge) {
+          if (isDown) {
+            badge.textContent = 'SUSTAIN: ON';
+            badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-950 text-cyan-300 border border-cyan-500 shadow-sm shadow-cyan-500/50 cursor-pointer';
+            checklist.markSustain();
+          } else {
+            badge.textContent = 'SUSTAIN: OFF';
+            badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700 cursor-pointer';
+          }
+        }
+        addMidiLog('Alesis V49', 'Sustain (CC 64)', channel, 'CC 64', value, isDown ? 'Pedal Pisado (Hold ON)' : 'Pedal Soltado (Hold OFF)');
+        return;
+      }
+
+      if ([0, 7, 10, 11, 32, 120, 121, 123].includes(ccNumber)) {
+        addMidiLog('Alesis V49', `CC ${ccNumber}`, channel, `CC ${ccNumber}`, value, 'Mensaje de control estándar');
+        return;
+      }
+
+      let knobIndex = knobAssignments.indexOf(ccNumber);
+      if (knobIndex === -1) {
+        if (ccNumber >= 20 && ccNumber <= 23) {
+          knobIndex = ccNumber - 20;
+        } else if (ccNumber >= 14 && ccNumber <= 17) {
+          knobIndex = ccNumber - 14;
+        } else if (ccNumber >= 71 && ccNumber <= 74) {
+          knobIndex = ccNumber - 71;
+        }
+      }
+
+      if (knobIndex >= 0 && knobIndex < 4) {
+        knobAssignments[knobIndex] = ccNumber;
+        const ccLabel = document.getElementById(`knobCc${knobIndex + 1}`);
+        if (ccLabel) {
+          ccLabel.textContent = `CC ${ccNumber}`;
+          ccLabel.classList.add('text-cyan-400');
+        }
+        updateKnobVisual(knobIndex, value);
+        const knobNames = ['Cutoff Filtro', 'Resonancia', 'Eco / Delay', 'Release'];
+        addMidiLog('Alesis V49', `Knob ${knobIndex + 1} (CC ${ccNumber})`, channel, `CC ${ccNumber}`, value, `${knobNames[knobIndex]} ajustado`);
+      } else {
+        addMidiLog('Alesis V49', `Control CC ${ccNumber}`, channel, `CC ${ccNumber}`, value, 'Comando CC adicional');
+      }
+    }
+
+    // Initialize UI on load
+    document.addEventListener('DOMContentLoaded', () => {
+      renderKeyboard();
+      for (let k = 0; k < 4; k++) {
+        updateKnobVisual(k, knobValues[k]);
+      }
+      setPadPreset('gm');
+      updatePendingDiagnoseUI();
+
+      document.getElementById('connectMidiBtn').addEventListener('click', () => initWebMIDI());
+      document.getElementById('masterVol').addEventListener('input', (e) => audio.setMasterVolume(e.target.value));
+      document.getElementById('presetSelect').addEventListener('change', (e) => { audio.preset = e.target.value; });
+      document.getElementById('resetChecklistBtn').addEventListener('click', () => checklist.reset());
+      document.getElementById('completeChecklistBtn').addEventListener('click', () => checklist.forceComplete());
+
+      document.getElementById('toggleHighlightMissingBtn').addEventListener('click', () => {
+        highlightMissingKeys = !highlightMissingKeys;
+        const container = document.getElementById('keyboardContainer');
+        const dot = document.getElementById('highlightToggleDot');
+        const btn = document.getElementById('toggleHighlightMissingBtn');
+
+        if (highlightMissingKeys) {
+          if (container) container.classList.add('show-pending-keys');
+          if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+          btn.classList.add('border-cyan-500', 'bg-slate-800');
+        } else {
+          if (container) container.classList.remove('show-pending-keys');
+          if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+          btn.classList.remove('border-cyan-500', 'bg-slate-800');
+        }
+      });
+
+      let isDraggingPitch = false;
+      const pitchHandle = document.getElementById('pitchWheelHandle');
+      if (pitchHandle) {
+        pitchHandle.addEventListener('mousedown', () => { isDraggingPitch = true; });
+        window.addEventListener('mouseup', () => {
+          if (isDraggingPitch) {
+            isDraggingPitch = false;
+            setPitchBendVisual(8192);
+          }
+        });
+        window.addEventListener('mousemove', (e) => {
+          if (!isDraggingPitch) return;
+          const track = pitchHandle.parentElement.getBoundingClientRect();
+          const relY = Math.max(0, Math.min(1, (e.clientY - track.top) / track.height));
+          const val14 = Math.round((1 - relY) * 16383);
+          setPitchBendVisual(val14);
+        });
+      }
+
+      const KEY_NOTE_MAP = {
+        'KeyA': 48, 'KeyW': 49, 'KeyS': 50, 'KeyE': 51, 'KeyD': 52,
+        'KeyF': 53, 'KeyT': 54, 'KeyG': 55, 'KeyY': 56, 'KeyH': 57,
+        'KeyU': 58, 'KeyJ': 59, 'KeyK': 60
+      };
+      const activeKeysDown = new Set();
+
+      window.addEventListener('keydown', (e) => {
+        if (e.repeat || activeKeysDown.has(e.code)) return;
+        if (KEY_NOTE_MAP[e.code]) {
+          activeKeysDown.add(e.code);
+          const note = KEY_NOTE_MAP[e.code];
+          handleNoteOn(note, 100, 1);
+        }
+      });
+
+      window.addEventListener('keyup', (e) => {
+        if (KEY_NOTE_MAP[e.code]) {
+          activeKeysDown.delete(e.code);
+          const note = KEY_NOTE_MAP[e.code];
+          handleNoteOff(note, 1);
+        }
+      });
+
+      window.addEventListener('click', () => {
+        audio.init();
+        audio.resume();
+      }, { once: true });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alesis V49 - Hardware Tester &amp; Sound Workstation</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2306b6d4'/><path d='M8 24 L16 8 L24 24 Z' fill='%23020617'/></svg>">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
+
+  <!-- TOP BAR / HEADER -->
+  <header class="border-b border-slate-800/80 bg-slate-900/70 backdrop-blur-md sticky top-0 z-50 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Device Label -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 font-black text-black text-lg">
+          V
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold tracking-tight text-white">Alesis V49 Hardware &amp; Sound Tester</h1>
+            <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/50">Pro Diagnostic</span>
+          </div>
+          <p class="text-xs text-slate-400">Verificador de teclas, pads, pitch bend, modulación y perillas con audio Web MIDI</p>
+        </div>
+      </div>
+
+      <!-- MIDI Connection & Engine Status -->
+      <div class="flex items-center gap-3 flex-wrap">
+        <div id="midiStatusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs">
+          <span id="statusLed" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+          <span id="statusText" class="text-slate-300 font-medium">Desconectado (Haz clic en Conectar)</span>
+        </div>
+
+        <!-- Download / External Window Quick Actions -->
+        <button id="downloadStandaloneBtn" title="Descargar versión standalone todo-en-uno para abrir sin conexión" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-cyan-300 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          <span>Descargar Standalone</span>
+        </button>
+
+        <!-- Master Preset Select -->
+        <div class="flex items-center gap-1.5 bg-slate-800/80 border border-slate-700 rounded-lg px-2.5 py-1">
+          <span class="text-xs text-slate-400">Sonido:</span>
+          <select id="presetSelect" class="bg-transparent text-xs text-cyan-300 font-semibold focus:outline-none cursor-pointer">
+            <option value="sawLead" class="bg-slate-900 text-slate-200">Analog Saw Lead</option>
+            <option value="electricPiano" class="bg-slate-900 text-slate-200">Electric Piano (Rhodes)</option>
+            <option value="warmPad" class="bg-slate-900 text-slate-200">Warm Synth Pad</option>
+            <option value="organ" class="bg-slate-900 text-slate-200">Vintage Organ</option>
+          </select>
+        </div>
+
+        <!-- Volume Master -->
+        <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1">
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+          </svg>
+          <input id="masterVol" type="range" min="0" max="1" step="0.01" value="0.75" class="w-16 accent-cyan-400 cursor-pointer">
+        </div>
+
+        <!-- Panic / Cut Audio Button -->
+        <button id="panicBtn" title="Cortar inmediatamente todas las notas sonando" class="flex items-center gap-1.5 bg-red-950/80 hover:bg-red-900 border border-red-600/60 text-red-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 shadow-md shadow-red-950/50">
+          <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+          <span>SILENCIAR (PANIC)</span>
+        </button>
+
+        <!-- Main Connect Button -->
+        <button id="connectMidiBtn" class="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs uppercase tracking-wider px-4 py-2 rounded-lg transition-all shadow-lg shadow-cyan-500/25 active:scale-95">
+          <svg class="w-4 h-4 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+          <span id="connectBtnText">Conectar Alesis V49</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="max-w-7xl mx-auto w-full px-4 py-4 space-y-4 flex-1">
+
+    <!-- IFRAME RESTRICTION BANNER (Displayed only if browser blocks MIDI in iframe) -->
+    <div id="sandboxWarningBanner" class="bg-amber-950/80 border border-amber-600/60 rounded-xl p-3.5 text-amber-200 text-xs shadow-lg animate-fadeIn hidden">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-start gap-2.5">
+          <svg class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+          <div>
+            <strong class="font-bold text-amber-300">Aviso sobre visor integrado:</strong> El navegador puede bloquear los puertos USB/MIDI dentro de ventanas embebidas o iframes por políticas de seguridad.
+            <p class="text-slate-300 text-[11px] mt-1">Para conectar físicamente el Alesis V49 sin restricciones, abre la página directamente en tu navegador (Chrome, Edge u Opera) o haz clic en <strong>"Abrir en Pestaña Independiente"</strong>.</p>
+          </div>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button id="openNewTabBtn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition-colors">
+            Abrir Pestaña Nueva
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HARDWARE HEALTH CHECKLIST BAR -->
+    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 shadow-xl">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-2.5">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full bg-cyan-400"></div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-200">Verificación de Componentes Físicos (Hardware Checklist)</span>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <span id="checklistPercentage" class="mono text-cyan-400 font-bold text-sm">0% verificado</span>
+          <button id="resetChecklistBtn" class="text-slate-400 hover:text-white transition-colors underline">Reiniciar prueba</button>
+        </div>
+      </div>
+
+      <!-- Checklist Badges Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+        
+        <!-- Keys -->
+        <div id="checkCardKeys" class="bg-slate-950/80 border border-slate-800 rounded-lg p-2 flex items-center justify-between transition-colors">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Teclas (49)</div>
+            <div class="mono text-xs font-bold text-slate-200"><span id="testedKeysCount">0</span>/49</div>
+          </div>
+          <div id="iconCheckKeys" class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+        </div>
+
+        <!-- Pads -->
+        <div id="checkCardPads" class="bg-slate-950/80 border border-slate-800 rounded-lg p-2 flex items-center justify-between transition-colors">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Pads (8)</div>
+            <div class="mono text-xs font-bold text-slate-200"><span id="testedPadsCount">0</span>/8</div>
+          </div>
+          <div id="iconCheckPads" class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+        </div>
+
+        <!-- Pitch Bend -->
+        <div id="checkCardPitch" class="bg-slate-950/80 border border-slate-800 rounded-lg p-2 flex items-center justify-between transition-colors">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Pitch Bend</div>
+            <div id="testedPitchLabel" class="text-xs font-bold text-slate-400">Sin mover</div>
+          </div>
+          <div id="iconCheckPitch" class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+        </div>
+
+        <!-- Mod Wheel -->
+        <div id="checkCardMod" class="bg-slate-950/80 border border-slate-800 rounded-lg p-2 flex items-center justify-between transition-colors">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Modulación</div>
+            <div id="testedModLabel" class="text-xs font-bold text-slate-400">Sin mover</div>
+          </div>
+          <div id="iconCheckMod" class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+        </div>
+
+        <!-- Knobs -->
+        <div id="checkCardKnobs" class="bg-slate-950/80 border border-slate-800 rounded-lg p-2 flex items-center justify-between transition-colors">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Perillas (4)</div>
+            <div class="mono text-xs font-bold text-slate-200"><span id="testedKnobsCount">0</span>/4</div>
+          </div>
+          <div id="iconCheckKnobs" class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+        </div>
+
+        <!-- Sustain Pedal -->
+        <div id="checkCardSustain" class="bg-slate-950/80 border border-slate-800 rounded-lg p-2 flex items-center justify-between transition-colors">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Pedal Sustain</div>
+            <div id="testedSustainLabel" class="text-xs font-bold text-slate-400">Opcional</div>
+          </div>
+          <div id="iconCheckSustain" class="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DYNAMIC PENDING STATUS PANEL -->
+      <div id="pendingContainer" class="mt-3 pt-3 border-t border-slate-800/80">
+        <div id="pendingHeader" class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-black">!</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-300">¿Qué falta probar todavía?</span>
+            <span id="pendingItemsCountBadge" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-950/80 text-amber-300 border border-amber-800/60 font-bold">Iniciando verificación...</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="toggleHighlightMissingBtn" class="text-[11px] font-medium text-cyan-400 hover:text-cyan-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded transition-colors flex items-center gap-1.5">
+              <span id="highlightToggleDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span>Resaltar teclas pendientes en pantalla</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Badges list of pending components -->
+        <div id="pendingBadgesList" class="flex flex-wrap gap-2 text-xs"></div>
+
+        <!-- All components tested success card (hidden by default) -->
+        <div id="allCompleteBanner" class="bg-emerald-950/60 border border-emerald-500/60 rounded-lg p-3 text-emerald-200 text-xs flex items-center justify-between shadow-lg shadow-emerald-950/40 hidden">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-base font-black">
+              ✓
+            </div>
+            <div>
+              <strong class="font-bold text-sm text-emerald-300">¡Verificación Completa de Hardware (100%)!</strong>
+              <p class="text-emerald-400/90 text-[11px]">Todas las 49 teclas, los 8 pads, el pitch bend, la modulación y las 4 perillas responden sin fallas ni puntos muertos.</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wider">Hardware 100% Funcional</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN HARDWARE REPLICA CHASSIS (ALESIS V49 DASHBOARD) -->
+    <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-4 shadow-2xl relative overflow-hidden">
+      
+      <!-- Subtle chassis accents -->
+      <div class="flex items-center justify-between text-xs text-slate-500 pb-3 border-b border-slate-800/80 mb-4 font-mono">
+        <span class="tracking-widest font-bold text-slate-400 uppercase flex items-center gap-2">
+          <span class="w-2 h-2 rounded-sm bg-blue-500 inline-block"></span> ALESIS V49 CONTROLLER DASHBOARD
+        </span>
+        <div class="flex items-center gap-3">
+          <span id="octaveIndicator" class="text-[10px] text-slate-400 font-mono hidden md:inline-block">Rango Teclado: <strong class="text-cyan-400">C2 (36) - C6 (84)</strong></span>
+          <!-- Transposition / Octave shift controls -->
+          <div class="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5">
+            <span class="text-[10px] text-slate-400 mr-1">Octava Base:</span>
+            <button id="octaveDownBtn" class="px-1.5 py-0.2 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold rounded text-xs">-</button>
+            <span id="currentOctaveShiftLabel" class="text-cyan-400 font-bold px-1 text-xs">C2</span>
+            <button id="octaveUpBtn" class="px-1.5 py-0.2 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold rounded text-xs">+</button>
+            <button id="autoOctaveBtn" class="ml-1 text-[9px] bg-cyan-950 text-cyan-300 border border-cyan-800/60 px-1.5 py-0.5 rounded hover:bg-cyan-900" title="Auto-detecta la octava al tocar cualquier tecla">Auto</button>
+          </div>
+          <span id="sustainStatusBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700 cursor-pointer">SUSTAIN: OFF</span>
+        </div>
+      </div>
+
+      <!-- TOP CONTROLS SECTION: Wheels, Knobs, and 8 Pads -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4">
+        
+        <!-- LEFT: Pitch & Mod Wheels -->
+        <div class="lg:col-span-3 bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex gap-4 justify-around items-center">
+          
+          <!-- Pitch Bend Wheel -->
+          <div class="flex flex-col items-center gap-1.5 w-1/2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pitch Bend</span>
+            <div class="relative w-14 h-36 rounded-md wheel-track border border-slate-700/60 p-1 flex justify-center items-center overflow-hidden">
+              <!-- Center spring line -->
+              <div class="absolute w-full h-[1px] bg-cyan-500/50 left-0 top-1/2 -translate-y-1/2 z-0"></div>
+              <!-- Wheel movable block -->
+              <div id="pitchWheelHandle" class="absolute w-12 h-14 rounded-sm wheel-handle border border-slate-500/40 cursor-ns-resize transition-all duration-75 flex items-center justify-center shadow-lg" style="top: 44px;">
+                <div class="w-6 h-1 rounded-full bg-cyan-400/80"></div>
+              </div>
+            </div>
+            <div class="mono text-[11px] text-cyan-400 font-semibold mt-1">
+              <span id="pitchBendValDisplay">+0</span>
+            </div>
+            <span class="text-[9px] text-slate-500 font-mono">(-8192 a +8191)</span>
+          </div>
+
+          <!-- Modulation Wheel -->
+          <div class="flex flex-col items-center gap-1.5 w-1/2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Mod (CC 1)</span>
+            <div class="relative w-14 h-36 rounded-md wheel-track border border-slate-700/60 p-1 flex justify-center items-end overflow-hidden">
+              <!-- LED column fill -->
+              <div id="modWheelFill" class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-blue-600/40 via-cyan-500/50 to-cyan-400/80 transition-all duration-75" style="height: 0%;"></div>
+              <!-- Wheel movable block -->
+              <div id="modWheelHandle" class="absolute w-12 h-14 rounded-sm wheel-handle border border-slate-500/40 cursor-ns-resize transition-all duration-75 flex items-center justify-center shadow-lg" style="bottom: 0px;">
+                <div class="w-6 h-1 rounded-full bg-cyan-400/80"></div>
+              </div>
+            </div>
+            <div class="mono text-[11px] text-cyan-400 font-semibold mt-1">
+              <span id="modValDisplay">0</span> / 127
+            </div>
+            <span class="text-[9px] text-slate-500 font-mono">(Vibrato audible)</span>
+          </div>
+
+        </div>
+
+        <!-- CENTER: 4 Rotary Knobs with real audio mapping -->
+        <div class="lg:col-span-5 bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">4 Perillas Giratorias (Knobs Asignables)</span>
+            <span class="text-[10px] text-cyan-400 font-mono bg-cyan-950/50 px-2 py-0.5 rounded border border-cyan-800/40">Filtro &amp; Efectos en vivo</span>
+          </div>
+
+          <div class="grid grid-cols-4 gap-2 text-center">
+            
+            <!-- Knob 1: Cutoff -->
+            <div class="flex flex-col items-center group">
+              <span class="text-[10px] font-bold text-slate-300">KNOB 1</span>
+              <span class="text-[9px] text-slate-500 mb-1">Cutoff</span>
+              <div class="relative w-14 h-14 flex items-center justify-center">
+                <svg class="w-14 h-14 -rotate-90 transform" viewBox="0 0 36 36">
+                  <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                  <path id="knobArc1" class="text-cyan-400 transition-all duration-75" stroke-dasharray="100, 100" stroke-dashoffset="46.85" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                </svg>
+                <div id="knobCenter1" class="absolute w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-md">
+                  <div class="w-1 h-3 bg-cyan-400 rounded-full -translate-y-1.5 transition-transform duration-75" id="knobIndicator1" style="transform: translateY(-6px) rotate(56.3deg);"></div>
+                </div>
+              </div>
+              <div class="mono text-[11px] text-cyan-400 font-bold mt-1" id="knobVal1">90</div>
+              <span class="text-[8px] text-slate-400 font-mono text-cyan-400" id="knobCc1">CC 20</span>
+            </div>
+
+            <!-- Knob 2: Resonance -->
+            <div class="flex flex-col items-center group">
+              <span class="text-[10px] font-bold text-slate-300">KNOB 2</span>
+              <span class="text-[9px] text-slate-500 mb-1">Resonancia</span>
+              <div class="relative w-14 h-14 flex items-center justify-center">
+                <svg class="w-14 h-14 -rotate-90 transform" viewBox="0 0 36 36">
+                  <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                  <path id="knobArc2" class="text-cyan-400 transition-all duration-75" stroke-dasharray="100, 100" stroke-dashoffset="88.18" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                </svg>
+                <div class="absolute w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-md">
+                  <div class="w-1 h-3 bg-cyan-400 rounded-full -translate-y-1.5 transition-transform duration-75" id="knobIndicator2" style="transform: translateY(-6px) rotate(-92.5deg);"></div>
+                </div>
+              </div>
+              <div class="mono text-[11px] text-cyan-400 font-bold mt-1" id="knobVal2">20</div>
+              <span class="text-[8px] text-slate-400 font-mono text-cyan-400" id="knobCc2">CC 21</span>
+            </div>
+
+            <!-- Knob 3: Delay Mix -->
+            <div class="flex flex-col items-center group">
+              <span class="text-[10px] font-bold text-slate-300">KNOB 3</span>
+              <span class="text-[9px] text-slate-500 mb-1">Eco / Delay</span>
+              <div class="relative w-14 h-14 flex items-center justify-center">
+                <svg class="w-14 h-14 -rotate-90 transform" viewBox="0 0 36 36">
+                  <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                  <path id="knobArc3" class="text-cyan-400 transition-all duration-75" stroke-dasharray="100, 100" stroke-dashoffset="85.23" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                </svg>
+                <div class="absolute w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-md">
+                  <div class="w-1 h-3 bg-cyan-400 rounded-full -translate-y-1.5 transition-transform duration-75" id="knobIndicator3" style="transform: translateY(-6px) rotate(-81.9deg);"></div>
+                </div>
+              </div>
+              <div class="mono text-[11px] text-cyan-400 font-bold mt-1" id="knobVal3">25</div>
+              <span class="text-[8px] text-slate-400 font-mono text-cyan-400" id="knobCc3">CC 22</span>
+            </div>
+
+            <!-- Knob 4: Release Time -->
+            <div class="flex flex-col items-center group">
+              <span class="text-[10px] font-bold text-slate-300">KNOB 4</span>
+              <span class="text-[9px] text-slate-500 mb-1">Release</span>
+              <div class="relative w-14 h-14 flex items-center justify-center">
+                <svg class="w-14 h-14 -rotate-90 transform" viewBox="0 0 36 36">
+                  <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                  <path id="knobArc4" class="text-cyan-400 transition-all duration-75" stroke-dasharray="100, 100" stroke-dashoffset="76.37" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                </svg>
+                <div class="absolute w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-md">
+                  <div class="w-1 h-3 bg-cyan-400 rounded-full -translate-y-1.5 transition-transform duration-75" id="knobIndicator4" style="transform: translateY(-6px) rotate(-50deg);"></div>
+                </div>
+              </div>
+              <div class="mono text-[11px] text-cyan-400 font-bold mt-1" id="knobVal4">40</div>
+              <span class="text-[8px] text-slate-400 font-mono text-cyan-400" id="knobCc4">CC 23</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- RIGHT: 8 Backlit Drum Pads (2x4 Grid) -->
+        <div class="lg:col-span-4 bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">8 Pads de Percusión</span>
+            <div class="flex items-center gap-1.5 flex-wrap justify-end">
+              <select id="padMapPreset" class="bg-slate-900 border border-slate-700 text-cyan-300 text-[10px] rounded px-1.5 py-0.5 font-mono focus:outline-none cursor-pointer">
+                <option value="gm">Canal 10 / GM Drums (36, 38, 42...)</option>
+                <option value="factory48">Alesis Fábrica (Notas 48 a 55)</option>
+                <option value="chromatic36">Cromático C1 (36 a 43)</option>
+              </select>
+              <button id="learnPadsWizardBtn" title="Aprender los 8 pads en orden tocándolos uno a uno" class="text-[10px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-2 py-0.5 rounded transition-all flex items-center gap-1 shadow-sm shadow-amber-500/20 active:scale-95">🎯 <span>Asignar 1 a 8</span></button>
+              <button id="resetPadsBtn" title="Limpiar mapeo de pads" class="text-[9px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700">
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <!-- Wizard Guide Prompt (Displayed during step-by-step pad assignment) -->
+          <div id="padWizardPrompt" class="bg-amber-950/90 border border-amber-500/70 rounded-lg p-1.5 text-center text-xs text-amber-200 font-bold mb-2 shadow-inner hidden">
+            <span id="padWizardPromptText">👉 Golpea el <strong class="text-amber-300 uppercase">PAD 1</strong> físico en tu Alesis...</span>
+            <button id="cancelPadWizardBtn" class="ml-2 text-[10px] underline text-slate-400 hover:text-white">Cancelar</button>
+          </div>
+
+          <!-- Pads Grid -->
+          <div class="grid grid-cols-4 gap-2 h-full">
+            <!-- Pad 1 -->
+            <button data-pad="0" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 1</span>
+              <span id="padNoteLabel0" class="text-[8px] text-cyan-400 font-mono">#36</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 2 -->
+            <button data-pad="1" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 2</span>
+              <span id="padNoteLabel1" class="text-[8px] text-cyan-400 font-mono">#38</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 3 -->
+            <button data-pad="2" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 3</span>
+              <span id="padNoteLabel2" class="text-[8px] text-cyan-400 font-mono">#42</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 4 -->
+            <button data-pad="3" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 4</span>
+              <span id="padNoteLabel3" class="text-[8px] text-cyan-400 font-mono">#46</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 5 -->
+            <button data-pad="4" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 5</span>
+              <span id="padNoteLabel4" class="text-[8px] text-cyan-400 font-mono">#41</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 6 -->
+            <button data-pad="5" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 6</span>
+              <span id="padNoteLabel5" class="text-[8px] text-cyan-400 font-mono">#45</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 7 -->
+            <button data-pad="6" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 7</span>
+              <span id="padNoteLabel6" class="text-[8px] text-cyan-400 font-mono">#49</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+            <!-- Pad 8 -->
+            <button data-pad="7" class="drum-pad relative rounded-lg bg-slate-800 border border-slate-700/80 hover:border-amber-400/50 p-2 flex flex-col justify-between items-center transition-all aspect-square active:scale-95 shadow-inner">
+              <span class="text-[9px] font-bold text-slate-400">PAD 8</span>
+              <span id="padNoteLabel7" class="text-[8px] text-cyan-400 font-mono">#51</span>
+              <span class="pad-vel mono text-[10px] font-bold text-amber-400">--</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 49-KEY VIRTUAL HARDWARE KEYBOARD (C2 to C6) -->
+      <div class="relative bg-slate-950 p-3 rounded-xl border border-slate-800 overflow-x-auto">
+        <div class="flex items-center justify-between mb-2 px-1 text-xs">
+          <div class="flex items-center gap-3">
+            <span class="font-bold text-slate-300">Teclado de 49 Teclas (Sensible a la Velocidad)</span>
+            <span id="activeNoteDisplay" class="text-cyan-400 font-mono font-bold">Nota: -- | Tecla Física: -- | Velocity: --</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="missingKeysHelp" class="text-amber-400/90 text-[11px] font-mono hidden">Faltan teclas por tocar</span>
+            <button id="completeChecklistBtn" title="Completa el 100% de la prueba de forma rápida" class="text-[10px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-2 py-0.5 rounded transition-colors">
+              Validar 100%
+            </button>
+          </div>
+        </div>
+
+        <!-- Keys Container with fixed relative proportion -->
+        <div id="keyboardContainer" class="relative flex h-44 min-w-[760px] w-full rounded-md overflow-hidden bg-slate-900 border border-slate-800"></div>
+      </div>
+
+    </div>
+
+    <!-- REAL-TIME MIDI EVENT MONITOR & LOG CONSOLE -->
+    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 shadow-xl">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-200">Monitor Técnico MIDI en Tiempo Real</span>
+          <span class="text-[10px] text-slate-400 font-mono">(Monitoreo en tiempo real de notas, CC, velocidad y latencia)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="clearLogBtn" class="text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800 border border-slate-700 transition-colors">
+            Limpiar Registro
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto max-h-40 overflow-y-auto rounded-lg border border-slate-800 bg-slate-950/90 font-mono text-xs">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-slate-900/90 text-slate-400 text-[10px] uppercase sticky top-0 border-b border-slate-800">
+            <tr>
+              <th class="py-1.5 px-3">Hora</th>
+              <th class="py-1.5 px-3">Mensaje</th>
+              <th class="py-1.5 px-3">Canal</th>
+              <th class="py-1.5 px-3">Dato 1 (Nota / CC)</th>
+              <th class="py-1.5 px-3">Dato 2 (Velocidad / Valor)</th>
+              <th class="py-1.5 px-3">Detalle &amp; Comportamiento</th>
+            </tr>
+          </thead>
+          <tbody id="midiLogTableBody" class="divide-y divide-slate-800/50 text-[11px]">
+            <tr class="text-slate-500">
+              <td colspan="6" class="py-4 text-center">Esperando eventos MIDI... Conecta tu Alesis V49 o presiona las teclas en pantalla.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800/80 bg-slate-950/80 px-4 py-2.5 text-center text-xs text-slate-500">
+    Alesis V49 Web MIDI Verification Workstation • Compatible con Chrome, Edge, Brave y Opera en Windows, macOS y Linux.
+  </footer>
+
+  <!-- Application Logic Modules -->
+  <script src="js/audio-engine.js"></script>
+  <script src="js/checklist.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
