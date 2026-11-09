@@ -2,11 +2,14 @@
 
 > **Herramienta web interactiva para diagnóstico, prueba de hardware y sintetizador en tiempo real para el controlador MIDI Alesis V49.**
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+[![Demo Online - Probar en GitHub Pages](https://img.shields.io/badge/Demo%20Online-GitHub%20Pages-22c55e?style=for-the-badge&logo=github&logoColor=white)](https://castiquark.github.io/Alesis-v49-Web-MIDI-Tester-Synth/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Web MIDI API](https://img.shields.io/badge/Web%20MIDI-API-emerald.svg)
 ![Web Audio API](https://img.shields.io/badge/Web%20Audio-API-cyan.svg)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38bdf8.svg)
 ![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-brightgreen.svg)
+
+🚀 **[Haz clic aquí para probar la aplicación en vivo](https://castiquark.github.io/Alesis-v49-Web-MIDI-Tester-Synth/)**
 
 Una estación de diagnóstico moderna, rápida y completamente funcional en el navegador para verificar cada componente físico del teclado controlador **Alesis V49** (y otros teclados MIDI de 49 teclas). Incluye una réplica visual interactiva, un motor de síntesis de audio polifónico con 4 presets, caja de ritmos para los pads y una consola de monitoreo técnico MIDI en tiempo real.
 
@@ -82,6 +85,14 @@ Una estación de diagnóstico moderna, rápida y completamente funcional en el n
 
 No requiere instalación de software, Node.js ni herramientas de compilación. Funciona directamente en cualquier navegador moderno compatible con **Web MIDI API**.
 
+### 🌐 Opción 1: En Línea (Recomendado)
+Entra directamente desde tu navegador a:  
+👉 **[https://castiquark.github.io/Alesis-v49-Web-MIDI-Tester-Synth/](https://castiquark.github.io/Alesis-v49-Web-MIDI-Tester-Synth/)**
+
+### 💻 Opción 2: En Local
+1. Clona o descarga este repositorio.
+2. Abre [`index.html`](index.html) en tu navegador preferido.
+
 ### Navegadores Compatibles
 - ✅ **Google Chrome** (Recomendado)
 - ✅ **Microsoft Edge**
@@ -90,10 +101,9 @@ No requiere instalación de software, Node.js ni herramientas de compilación. F
 
 *(Nota: Mozilla Firefox y Safari en iOS actualmente no cuentan con soporte nativo para Web MIDI API).*
 
-### Pasos Rápidos
-
+### Pasos de Conexión
 1. Conecta tu **Alesis V49** (u otro teclado MIDI) a un puerto USB de tu computadora.
-2. Abre [`index.html`](index.html) en tu navegador.
+2. Abre la aplicación (en línea o local).
 3. Haz clic en el botón superior **"Conectar Alesis V49"**.
 4. El navegador te solicitará permiso para acceder a dispositivos MIDI; selecciona **"Permitir"**.
 5. ¡Listo! Al tocar teclas, pads o perillas, la interfaz responderá de inmediato visualmente y con audio.
@@ -107,8 +117,9 @@ El proyecto está diseñado bajo una arquitectura limpia y modular para facilita
 ```
 alesis-v49-tester/
 │
-├── index.html               # Punto de entrada principal (modular, ideal para GitHub Pages)
+├── index.html               # Punto de entrada principal (modular, servido en GitHub Pages)
 ├── Alesis_V49_Tester.html   # Versión standalone (todo-en-uno en un único archivo portátil)
+├── .nojekyll                # Desactiva Jekyll en GitHub Pages para carga estática directa
 │
 ├── css/
 │   └── style.css            # Estilos personalizados (teclas, ruedas, scrollbars, animaciones)
@@ -121,18 +132,6 @@ alesis-v49-tester/
 ├── LICENSE                  # Licencia MIT
 └── README.md                # Documentación del proyecto
 ```
-
----
-
-## 🌐 Despliegue en GitHub Pages (1 Clic)
-
-Para habilitar este tester online directamente desde tu repositorio de GitHub:
-
-1. Ve a tu repositorio en GitHub: **Settings** > **Pages**.
-2. En **Build and deployment** > **Source**, selecciona `Deploy from a branch`.
-3. Selecciona la rama `main` (o `master`) y la carpeta `/ (root)`.
-4. Haz clic en **Save**.
-5. En unos segundos tu aplicación estará disponible online en una URL pública (ejemplo: `https://tu-usuario.github.io/tu-repo/`).
 
 ---
 
